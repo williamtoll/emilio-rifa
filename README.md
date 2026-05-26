@@ -113,9 +113,16 @@ SMTP_FROM=La Rifa <tu_correo@gmail.com>
 | POST | `/api/tickets/{id}/send-email` | Enviar por correo |
 | GET | `/api/tickets/{id}/whatsapp-link` | Obtener enlace WhatsApp |
 
-## WhatsApp
+## WhatsApp y enlace público
 
-El botón **WhatsApp** abre WhatsApp Web/App con el mensaje del ticket listo para enviar al número registrado. Usa números de Paraguay (`09XXXXXXXX` → `+595` en el enlace `wa.me`).
+Cada ticket tiene un **UUID** (`public_id`) y una página pública:
+
+`https://tu-dominio.com/t/{uuid}`
+
+- Solo visible si el ticket está **pagado**
+- El botón **WhatsApp** envía el **enlace** a esa página (no el texto largo del ticket)
+- El **código QR** en la imagen apunta al mismo enlace
+- Botón **Copiar link** en tickets pagados
 
 ## Estructura del proyecto
 

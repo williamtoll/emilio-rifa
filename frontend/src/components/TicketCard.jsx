@@ -16,12 +16,17 @@ export default function TicketCard({
 }) {
   const [showImage, setShowImage] = useState(false)
   const [sharing, setSharing] = useState(false)
-  const { imageUrl, loading: imageLoading } = useTicketImage(ticket.id)
+  const isPaid = ticket.is_paid
+  const { imageUrl, loading: imageLoading } = useTicketImage(ticket.id, isPaid)
   const isEmailLoading = loading === `email-${ticket.id}`
   const isWaLoading = loading === `wa-${ticket.id}`
   const isPaidLoading = loading === `paid-${ticket.id}`
 
   const handleShare = async () => {
+    if (!isPaid) {
+      onError?.('El ticket debe estar pagado para compartir la imagen')
+      return
+    }
     if (!imageUrl) {
       setShowImage(true)
       return
@@ -49,15 +54,16 @@ export default function TicketCard({
 
   return (
     <>
-      <article className={`ticket-card ${ticket.is_paid ? 'paid' : 'unpaid'}`}>
+      <article className={`ticket-card ${isPaid ? 'paid' : 'unpaid'}`}>
         <button
           type="button"
           className="ticket-thumb"
           onClick={() => setShowImage(true)}
-          title="Ver imagen del ticket"
+          title={isPaid ? 'Ver imagen del ticket' : 'Ver detalle del ticket'}
         >
-          {imageLoading && <span className="ticket-thumb-loading">...</span>}
-          {imageUrl && <img src={imageUrl} alt="" />}
+          {isPaid && imageLoading && <span className="ticket-thumb-loading">...</span>}
+          {isPaid && imageUrl && <img src={imageUrl} alt="" />}
+          {!isPaid && <span className="ticket-thumb-pending">Pendiente</span>}
         </button>
         <div className="ticket-number">#{ticket.ticket_number}</div>
         <div className="ticket-body">
@@ -66,32 +72,46 @@ export default function TicketCard({
             {ticket.buyer_phone && <span>📱 {displayParaguayPhone(ticket.buyer_phone)}</span>}
             {ticket.buyer_email && <span>✉️ {ticket.buyer_email}</span>}
           </div>
-          <span className={`badge ${ticket.is_paid ? 'badge-paid' : 'badge-unpaid'}`}>
-            {ticket.is_paid ? 'Pagado' : 'Pendiente'}
+          <span className={`badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}`}>
+            {isPaid ? 'Pagado' : 'Pendiente'}
           </span>
         </div>
         <div className="ticket-actions">
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowImage(true)}>
             Ver ticket
           </button>
+          {isPaid && (
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={handleShare}
+              disabled={sharing || imageLoading}
+            >
+              {sharing ? '...' : 'Compartir'}
+            </button>
+          )}
           <button
-            type="button"
-            className="btn btn-sm btn-primary"
-            onClick={handleShare}
-            disabled={sharing || imageLoading}
-          >
-            {sharing ? '...' : 'Compartir'}
-          </button>
-          <button
-            className={`btn btn-sm ${ticket.is_paid ? 'btn-warning' : 'btn-success'}`}
+            className={`btn btn-sm ${isPaid ? 'btn-warning' : 'btn-success'}`}
             onClick={onTogglePaid}
             disabled={isPaidLoading}
           >
-            {isPaidLoading ? '...' : ticket.is_paid ? 'Marcar pendiente' : 'Marcar pagado'}
+            {isPaidLoading ? '...' : isPaid ? 'Marcar pendiente' : 'Marcar pagado'}
           </button>
-          {ticket.buyer_phone && (
+          {isPaid && ticket.buyer_phone && (
             <button className="btn btn-sm btn-whatsapp" onClick={onWhatsApp} disabled={isWaLoading}>
               {isWaLoading ? '...' : 'WhatsApp'}
+            </button>
+          )}
+          {isPaid && ticket.public_url && (
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                navigator.clipboard.writeText(ticket.public_url)
+                onNotice?.('Enlace copiado')
+              }}
+            >
+              Copiar link
             </button>
           )}
           {ticket.buyer_email && (

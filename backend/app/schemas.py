@@ -73,11 +73,24 @@ class TicketResponse(TicketBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    public_id: str
+    public_url: str | None = None
     raffle_id: int
     ticket_number: str
     is_paid: bool
     created_at: datetime
     raffle_name: str | None = None
+
+
+class PublicTicketResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    public_id: str
+    ticket_number: str
+    buyer_name: str
+    raffle_name: str
+    ticket_price: Decimal
+    is_paid: bool
 
 
 class SendTicketRequest(BaseModel):

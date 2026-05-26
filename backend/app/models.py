@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
@@ -24,6 +25,9 @@ class Ticket(Base):
     __table_args__ = (UniqueConstraint("raffle_id", "ticket_number", name="uq_raffle_ticket_number"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(
+        String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
+    )
     raffle_id: Mapped[int] = mapped_column(ForeignKey("raffles.id", ondelete="CASCADE"), nullable=False)
     ticket_number: Mapped[str] = mapped_column(String(20), nullable=False)
     buyer_name: Mapped[str] = mapped_column(String(200), nullable=False)

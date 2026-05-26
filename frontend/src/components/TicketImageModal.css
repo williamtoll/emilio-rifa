@@ -34,6 +34,25 @@
   display: block;
 }
 
+.ticket-public-link {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ticket-public-link input {
+  flex: 1;
+  font-size: 0.8125rem;
+}
+
+.ticket-image-unpaid {
+  color: var(--warning);
+  text-align: center;
+  font-size: 0.9375rem;
+  padding: 1.5rem 0.5rem;
+  line-height: 1.5;
+}
+
 .ticket-image-status {
   color: var(--text-muted);
   padding: 2rem;

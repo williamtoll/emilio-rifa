@@ -15,6 +15,7 @@ from app.schemas import (
 from app.services.email_service import send_ticket_email
 from app.services.ticket_generator import generate_ticket_number
 from app.services.ticket_image_service import generate_ticket_image
+from app.services.ticket_urls import get_public_ticket_url
 from app.services.whatsapp_service import build_whatsapp_url
 
 router = APIRouter(
@@ -25,8 +26,11 @@ router = APIRouter(
 
 
 def _ticket_to_response(ticket: Ticket) -> TicketResponse:
+    public_url = get_public_ticket_url(ticket) if ticket.is_paid else None
     return TicketResponse(
         id=ticket.id,
+        public_id=ticket.public_id,
+        public_url=public_url,
         raffle_id=ticket.raffle_id,
         ticket_number=ticket.ticket_number,
         buyer_name=ticket.buyer_name,
@@ -133,6 +137,11 @@ def get_ticket_image(ticket_id: int, db: Session = Depends(get_db)):
     ticket = db.query(Ticket).options(joinedload(Ticket.raffle)).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if not ticket.is_paid:
+        raise HTTPException(
+            status_code=403,
+            detail="El ticket debe estar pagado para compartir o descargar la imagen",
+        )
     image_bytes = generate_ticket_image(ticket)
     return Response(
         content=image_bytes,
@@ -151,3 +160,14 @@ def whatsapp_link(ticket_id: int, message: str | None = None, db: Session = Depe
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return WhatsAppLinkResponse(url=url, message=text)
+
+
+@router.get("/{ticket_id}/public-link")
+def get_public_link(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = db.query(Ticket).options(joinedload(Ticket.raffle)).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if not ticket.is_paid:
+        raise HTTPException(status_code=400, detail="El ticket debe estar pagado para obtener el enlace público")
+    link = get_public_ticket_url(ticket)
+    return {"url": link, "public_id": ticket.public_id}

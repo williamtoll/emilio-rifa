@@ -1,0 +1,76 @@
+.public-ticket-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.12), transparent 60%),
+    var(--bg);
+}
+
+.public-ticket-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.public-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  margin-bottom: 1.25rem;
+}
+
+.public-logo {
+  font-size: 2rem;
+}
+
+.public-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.public-header p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.public-ticket-image {
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.public-ticket-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.public-ticket-info {
+  text-align: left;
+  font-size: 0.9375rem;
+}
+
+.public-ticket-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+}
+
+.public-ticket-info p {
+  margin-bottom: 0.5rem;
+}
+
+.public-error {
+  color: #fca5a5;
+  margin-top: 1rem;
+}

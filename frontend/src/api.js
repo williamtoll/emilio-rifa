@@ -81,4 +81,22 @@ export const ticketsApi = {
     const blob = await res.blob()
     return URL.createObjectURL(blob)
   },
+  publicLink: (id) => request(`/tickets/${id}/public-link`),
+}
+
+export const publicApi = {
+  getTicket: (publicId) =>
+    fetch(`${API}/public/tickets/${publicId}`).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || 'Ticket no encontrado')
+      }
+      return res.json()
+    }),
+  fetchImage: async (publicId) => {
+    const res = await fetch(`${API}/public/tickets/${publicId}/image`)
+    if (!res.ok) throw new Error('No se pudo cargar la imagen del ticket')
+    const blob = await res.blob()
+    return URL.createObjectURL(blob)
+  },
 }

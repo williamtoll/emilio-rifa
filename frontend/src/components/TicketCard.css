@@ -38,6 +38,12 @@
   font-size: 0.875rem;
 }
 
+.ticket-thumb-pending {
+  color: var(--warning);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
 .ticket-card.paid {
   border-left: 3px solid var(--success);
 }

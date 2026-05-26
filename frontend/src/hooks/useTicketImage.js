@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react'
 import { ticketsApi } from '../api'
 
-export function useTicketImage(ticketId) {
+export function useTicketImage(ticketId, enabled = true) {
   const [imageUrl, setImageUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    if (!enabled) {
+      setImageUrl(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     let objectUrl = null
     let cancelled = false
 
@@ -29,7 +36,7 @@ export function useTicketImage(ticketId) {
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [ticketId])
+  }, [ticketId, enabled])
 
   return { imageUrl, loading, error }
 }

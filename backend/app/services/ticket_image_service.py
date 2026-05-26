@@ -1,4 +1,3 @@
-import json
 from io import BytesIO
 
 import qrcode
@@ -6,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 from qrcode.constants import ERROR_CORRECT_M
 
 from app.models import Ticket
+from app.services.ticket_urls import get_public_ticket_url
 from app.utils.currency import format_guaranies
 
 WIDTH = 420
@@ -35,16 +35,7 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageF
 
 
 def build_qr_payload(ticket: Ticket) -> str:
-    raffle = ticket.raffle
-    payload = {
-        "app": "la-rifa",
-        "ticket_id": ticket.id,
-        "sorteo": raffle.name,
-        "numero": ticket.ticket_number,
-        "participante": ticket.buyer_name,
-        "pagado": ticket.is_paid,
-    }
-    return json.dumps(payload, ensure_ascii=False)
+    return get_public_ticket_url(ticket)
 
 
 def _font_line_height(font) -> int:

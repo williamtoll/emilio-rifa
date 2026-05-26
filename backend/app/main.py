@@ -5,12 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, raffles, tickets
+from app.db_migrate import ensure_public_id_column
+from app.routers import auth, public, raffles, tickets
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    ensure_public_id_column()
     yield
 
 
@@ -31,6 +33,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(public.router)
 app.include_router(raffles.router)
 app.include_router(tickets.router)
 

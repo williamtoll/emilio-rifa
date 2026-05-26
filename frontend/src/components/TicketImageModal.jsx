@@ -55,14 +55,21 @@ export default function TicketImageModal({ ticket, onClose, onNotice, onError })
           </p>
         ) : (
           <>
-            {ticket.public_url && (
+            {(ticket.short_url || ticket.public_url) && (
               <div className="ticket-public-link">
-                <input type="text" readOnly value={ticket.public_url} />
+                <a
+                  href={ticket.short_url || ticket.public_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ticket-share-link"
+                >
+                  {ticket.short_url || ticket.public_url}
+                </a>
                 <button
                   type="button"
                   className="btn btn-sm btn-secondary"
                   onClick={() => {
-                    navigator.clipboard.writeText(ticket.public_url)
+                    navigator.clipboard.writeText(ticket.short_url || ticket.public_url)
                     onNotice?.('Enlace copiado')
                   }}
                 >

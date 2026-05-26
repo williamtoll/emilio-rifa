@@ -75,6 +75,7 @@ class TicketResponse(TicketBase):
     id: int
     public_id: str
     public_url: str | None = None
+    short_url: str | None = None
     raffle_id: int
     ticket_number: str
     is_paid: bool

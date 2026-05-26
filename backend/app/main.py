@@ -1,18 +1,22 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import Base, engine
-from app.db_migrate import ensure_public_id_column
+from app.database import Base, engine, get_db
+from app.db_migrate import run_migrations
+from app.models import Ticket
 from app.routers import auth, public, raffles, tickets
+from app.services.ticket_urls import get_public_ticket_url
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    ensure_public_id_column()
+    run_migrations()
     yield
 
 
@@ -41,3 +45,15 @@ app.include_router(tickets.router)
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/s/{short_code}")
+def redirect_short_url(short_code: str, db: Session = Depends(get_db)):
+    ticket = (
+        db.query(Ticket)
+        .filter(Ticket.short_code == short_code, Ticket.is_paid.is_(True))
+        .first()
+    )
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Enlace no válido")
+    return RedirectResponse(url=get_public_ticket_url(ticket), status_code=302)

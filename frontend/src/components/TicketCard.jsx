@@ -102,12 +102,12 @@ export default function TicketCard({
               {isWaLoading ? '...' : 'WhatsApp'}
             </button>
           )}
-          {isPaid && ticket.public_url && (
+          {isPaid && (ticket.short_url || ticket.public_url) && (
             <button
               type="button"
               className="btn btn-sm btn-secondary"
               onClick={() => {
-                navigator.clipboard.writeText(ticket.public_url)
+                navigator.clipboard.writeText(ticket.short_url || ticket.public_url)
                 onNotice?.('Enlace copiado')
               }}
             >

@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 from qrcode.constants import ERROR_CORRECT_M
 
 from app.models import Ticket
-from app.services.ticket_urls import get_public_ticket_url
+from app.services.ticket_urls import get_short_ticket_url
 from app.utils.currency import format_guaranies
 
 WIDTH = 420
@@ -35,7 +35,7 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageF
 
 
 def build_qr_payload(ticket: Ticket) -> str:
-    return get_public_ticket_url(ticket)
+    return get_short_ticket_url(ticket)
 
 
 def _font_line_height(font) -> int:

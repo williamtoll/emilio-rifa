@@ -115,14 +115,17 @@ SMTP_FROM=La Rifa <tu_correo@gmail.com>
 
 ## WhatsApp y enlace público
 
-Cada ticket tiene un **UUID** (`public_id`) y una página pública:
+Cada ticket tiene un **UUID** (`public_id`) y un **enlace corto** para compartir:
 
-`https://tu-dominio.com/t/{uuid}`
+| Tipo | Ejemplo |
+|------|---------|
+| Corto (compartir) | `https://tu-dominio.com/s/Ab3xK9m2` |
+| Página pública | `https://tu-dominio.com/t/{uuid}` |
 
 - Solo visible si el ticket está **pagado**
-- El botón **WhatsApp** envía el **enlace** a esa página (no el texto largo del ticket)
-- El **código QR** en la imagen apunta al mismo enlace
-- Botón **Copiar link** en tickets pagados
+- **WhatsApp** envía el enlace corto en una línea aparte (clicable en la app)
+- El **QR** apunta al enlace corto
+- Botón **Copiar link** copia la URL corta
 
 ## Estructura del proyecto
 

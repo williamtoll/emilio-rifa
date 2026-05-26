@@ -15,7 +15,8 @@ from app.schemas import (
 from app.services.email_service import send_ticket_email
 from app.services.ticket_generator import generate_ticket_number
 from app.services.ticket_image_service import generate_ticket_image
-from app.services.ticket_urls import get_public_ticket_url
+from app.services.ticket_urls import get_short_ticket_url
+from app.utils.short_code import generate_unique_short_code
 from app.services.whatsapp_service import build_whatsapp_url
 
 router = APIRouter(
@@ -26,11 +27,12 @@ router = APIRouter(
 
 
 def _ticket_to_response(ticket: Ticket) -> TicketResponse:
-    public_url = get_public_ticket_url(ticket) if ticket.is_paid else None
+    share_url = get_short_ticket_url(ticket) if ticket.is_paid and ticket.short_code else None
     return TicketResponse(
         id=ticket.id,
         public_id=ticket.public_id,
-        public_url=public_url,
+        public_url=share_url,
+        short_url=share_url,
         raffle_id=ticket.raffle_id,
         ticket_number=ticket.ticket_number,
         buyer_name=ticket.buyer_name,
@@ -61,6 +63,7 @@ def create_ticket(data: TicketCreate, db: Session = Depends(get_db)):
     ticket = Ticket(
         raffle_id=data.raffle_id,
         ticket_number=ticket_number,
+        short_code=generate_unique_short_code(db),
         buyer_name=data.buyer_name,
         buyer_phone=data.buyer_phone,
         buyer_email=str(data.buyer_email) if data.buyer_email else None,
@@ -169,5 +172,5 @@ def get_public_link(ticket_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     if not ticket.is_paid:
         raise HTTPException(status_code=400, detail="El ticket debe estar pagado para obtener el enlace público")
-    link = get_public_ticket_url(ticket)
-    return {"url": link, "public_id": ticket.public_id}
+    link = get_short_ticket_url(ticket)
+    return {"url": link, "public_id": ticket.public_id, "short_code": ticket.short_code}

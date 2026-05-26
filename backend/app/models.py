@@ -28,6 +28,7 @@ class Ticket(Base):
     public_id: Mapped[str] = mapped_column(
         String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
     )
+    short_code: Mapped[str | None] = mapped_column(String(12), unique=True, index=True, nullable=True)
     raffle_id: Mapped[int] = mapped_column(ForeignKey("raffles.id", ondelete="CASCADE"), nullable=False)
     ticket_number: Mapped[str] = mapped_column(String(20), nullable=False)
     buyer_name: Mapped[str] = mapped_column(String(200), nullable=False)

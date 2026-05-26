@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import TicketCard from './TicketCard'
 import { formatGuaranies } from '../utils/currency'
+import {
+  formatParaguayPhoneInput,
+  isValidParaguayPhone,
+  normalizeParaguayPhone,
+} from '../utils/phone'
 import './TicketPanel.css'
 
 export default function TicketPanel({
@@ -17,15 +22,25 @@ export default function TicketPanel({
   const [buyerPhone, setBuyerPhone] = useState('')
   const [buyerEmail, setBuyerEmail] = useState('')
   const [saving, setSaving] = useState(false)
+  const [phoneError, setPhoneError] = useState(null)
   const [actionLoading, setActionLoading] = useState(null)
+
+  const handlePhoneChange = (e) => {
+    setPhoneError(null)
+    setBuyerPhone(formatParaguayPhoneInput(e.target.value))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (buyerPhone && !isValidParaguayPhone(buyerPhone)) {
+      setPhoneError('Ingresá un móvil válido: 09XXXXXXXX (10 dígitos)')
+      return
+    }
     setSaving(true)
     try {
       await onCreateTicket({
         buyer_name: buyerName,
-        buyer_phone: buyerPhone || null,
+        buyer_phone: normalizeParaguayPhone(buyerPhone),
         buyer_email: buyerEmail || null,
       })
       setBuyerName('')
@@ -116,12 +131,19 @@ export default function TicketPanel({
                 />
               </div>
               <div className="form-group">
-                <label>Teléfono (WhatsApp)</label>
+                <label>Teléfono móvil (Paraguay)</label>
                 <input
+                  type="tel"
+                  inputMode="numeric"
                   value={buyerPhone}
-                  onChange={(e) => setBuyerPhone(e.target.value)}
-                  placeholder="10 dígitos, ej: 5512345678"
+                  onChange={handlePhoneChange}
+                  placeholder="0961732207"
+                  maxLength={10}
+                  pattern="09[0-9]{8}"
+                  title="Formato: 09XXXXXXXX"
                 />
+                {phoneError && <p className="field-error">{phoneError}</p>}
+                <p className="field-hint">Formato: 09 + 8 dígitos (ej. 0961732207)</p>
               </div>
               <div className="form-group">
                 <label>Correo electrónico</label>

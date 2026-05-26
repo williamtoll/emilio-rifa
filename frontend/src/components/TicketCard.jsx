@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTicketImage } from '../hooks/useTicketImage'
+import { displayParaguayPhone } from '../utils/phone'
 import TicketImageModal from './TicketImageModal'
 import './TicketCard.css'
 
@@ -26,7 +27,7 @@ export default function TicketCard({ ticket, loading, onTogglePaid, onSendEmail,
         <div className="ticket-body">
           <h3>{ticket.buyer_name}</h3>
           <div className="ticket-contact">
-            {ticket.buyer_phone && <span>📱 {ticket.buyer_phone}</span>}
+            {ticket.buyer_phone && <span>📱 {displayParaguayPhone(ticket.buyer_phone)}</span>}
             {ticket.buyer_email && <span>✉️ {ticket.buyer_email}</span>}
           </div>
           <span className={`badge ${ticket.is_paid ? 'badge-paid' : 'badge-unpaid'}`}>

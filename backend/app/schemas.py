@@ -1,7 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.utils.phone import normalize_paraguay_phone
 
 
 class RaffleBase(BaseModel):
@@ -33,8 +35,20 @@ class RaffleResponse(RaffleBase):
 
 class TicketBase(BaseModel):
     buyer_name: str = Field(..., min_length=1, max_length=200)
-    buyer_phone: str | None = Field(None, max_length=30)
+    buyer_phone: str | None = Field(
+        None,
+        max_length=10,
+        description="Móvil Paraguay: 09XXXXXXXX",
+        examples=["0961732207"],
+    )
     buyer_email: EmailStr | None = None
+
+    @field_validator("buyer_phone")
+    @classmethod
+    def validate_paraguay_phone(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        return normalize_paraguay_phone(value)
 
 
 class TicketCreate(TicketBase):
@@ -43,9 +57,16 @@ class TicketCreate(TicketBase):
 
 class TicketUpdate(BaseModel):
     buyer_name: str | None = Field(None, min_length=1, max_length=200)
-    buyer_phone: str | None = Field(None, max_length=30)
+    buyer_phone: str | None = Field(None, max_length=10, examples=["0961732207"])
     buyer_email: EmailStr | None = None
     is_paid: bool | None = None
+
+    @field_validator("buyer_phone")
+    @classmethod
+    def validate_paraguay_phone(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        return normalize_paraguay_phone(value)
 
 
 class TicketResponse(TicketBase):

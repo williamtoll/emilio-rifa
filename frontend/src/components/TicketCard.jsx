@@ -1,15 +1,51 @@
 import { useState } from 'react'
 import { useTicketImage } from '../hooks/useTicketImage'
 import { displayParaguayPhone } from '../utils/phone'
+import { shareTicketImage } from '../utils/shareTicket'
 import TicketImageModal from './TicketImageModal'
 import './TicketCard.css'
 
-export default function TicketCard({ ticket, loading, onTogglePaid, onSendEmail, onWhatsApp }) {
+export default function TicketCard({
+  ticket,
+  loading,
+  onTogglePaid,
+  onSendEmail,
+  onWhatsApp,
+  onNotice,
+  onError,
+}) {
   const [showImage, setShowImage] = useState(false)
+  const [sharing, setSharing] = useState(false)
   const { imageUrl, loading: imageLoading } = useTicketImage(ticket.id)
   const isEmailLoading = loading === `email-${ticket.id}`
   const isWaLoading = loading === `wa-${ticket.id}`
   const isPaidLoading = loading === `paid-${ticket.id}`
+
+  const handleShare = async () => {
+    if (!imageUrl) {
+      setShowImage(true)
+      return
+    }
+    setSharing(true)
+    try {
+      const result = await shareTicketImage(
+        imageUrl,
+        ticket.ticket_number,
+        ticket.raffle_name,
+      )
+      if (result === 'downloaded') {
+        onNotice?.('Imagen descargada')
+      } else {
+        onNotice?.('Ticket compartido')
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        onError?.(err.message || 'No se pudo compartir')
+      }
+    } finally {
+      setSharing(false)
+    }
+  }
 
   return (
     <>
@@ -39,6 +75,14 @@ export default function TicketCard({ ticket, loading, onTogglePaid, onSendEmail,
             Ver ticket
           </button>
           <button
+            type="button"
+            className="btn btn-sm btn-primary"
+            onClick={handleShare}
+            disabled={sharing || imageLoading}
+          >
+            {sharing ? '...' : 'Compartir'}
+          </button>
+          <button
             className={`btn btn-sm ${ticket.is_paid ? 'btn-warning' : 'btn-success'}`}
             onClick={onTogglePaid}
             disabled={isPaidLoading}
@@ -57,7 +101,14 @@ export default function TicketCard({ ticket, loading, onTogglePaid, onSendEmail,
           )}
         </div>
       </article>
-      {showImage && <TicketImageModal ticket={ticket} onClose={() => setShowImage(false)} />}
+      {showImage && (
+        <TicketImageModal
+          ticket={ticket}
+          onClose={() => setShowImage(false)}
+          onNotice={onNotice}
+          onError={onError}
+        />
+      )}
     </>
   )
 }

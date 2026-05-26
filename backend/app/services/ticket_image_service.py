@@ -145,8 +145,7 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
     )
     img.paste(qr_img, (qr_x, qr_y))
 
-    draw.text((WIDTH // 2, qr_y + qr_size + 20), "Escanea para verificar", font=font_label, fill=MUTED, anchor="mm")
-    draw.text((WIDTH // 2, HEIGHT - 18), "larifa.app", font=font_label, fill=MUTED, anchor="mm")
+    draw.text((WIDTH // 2, HEIGHT - 18), "La Rifa", font=font_label, fill=MUTED, anchor="mm")
 
     buffer = BytesIO()
     img.save(buffer, format="PNG", optimize=True)

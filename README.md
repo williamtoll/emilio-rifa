@@ -19,7 +19,21 @@ Aplicación para gestionar sorteos, generar tickets y enviarlos por WhatsApp o c
 | Frontend   | React 18 + Vite         |
 | Base datos | PostgreSQL 16           |
 
-## Inicio rápido con Docker
+## Despliegue en producción (VPS Hetzner)
+
+Guía completa paso a paso: **[DEPLOY-HETZNER.md](./DEPLOY-HETZNER.md)**
+
+Incluye: Docker en Ubuntu, Nginx, HTTPS con Certbot, variables de entorno, backups y checklist de seguridad.
+
+Resumen:
+
+```bash
+cp .env.production.example .env   # editar contraseñas y dominio
+docker compose -f docker-compose.prod.yml up -d --build
+# Configurar Nginx + certbot en el VPS (ver guía)
+```
+
+## Inicio rápido con Docker (desarrollo)
 
 ```bash
 cp .env.example .env
@@ -101,7 +115,7 @@ SMTP_FROM=La Rifa <tu_correo@gmail.com>
 
 ## WhatsApp
 
-El botón **WhatsApp** abre WhatsApp Web/App con el mensaje del ticket listo para enviar al número registrado. No requiere API de pago; usa el formato estándar `https://wa.me/52XXXXXXXXXX`.
+El botón **WhatsApp** abre WhatsApp Web/App con el mensaje del ticket listo para enviar al número registrado. Usa números de Paraguay (`09XXXXXXXX` → `+595` en el enlace `wa.me`).
 
 ## Estructura del proyecto
 
@@ -117,6 +131,9 @@ emilio-sorteos/
 │   └── src/
 │       ├── App.jsx
 │       └── components/
-├── docker-compose.yml
+├── docker-compose.yml          # desarrollo local
+├── docker-compose.prod.yml   # producción en VPS
+├── deploy/                     # configuración Nginx ejemplo
+├── DEPLOY-HETZNER.md           # guía de despliegue
 └── README.md
 ```

@@ -162,6 +162,7 @@ export default function App() {
           onSendEmail={handleSendEmail}
           onWhatsApp={handleWhatsApp}
           onError={setError}
+          onNotice={showNotice}
         />
       </div>
     </div>

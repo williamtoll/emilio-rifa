@@ -16,6 +16,7 @@ export default function TicketPanel({
   onSendEmail,
   onWhatsApp,
   onError,
+  onNotice,
 }) {
   const [showForm, setShowForm] = useState(false)
   const [buyerName, setBuyerName] = useState('')
@@ -111,6 +112,8 @@ export default function TicketPanel({
               onTogglePaid={() => runAction(`paid-${ticket.id}`, () => onTogglePaid(ticket))}
               onSendEmail={() => runAction(`email-${ticket.id}`, () => onSendEmail(ticket.id))}
               onWhatsApp={() => runAction(`wa-${ticket.id}`, () => onWhatsApp(ticket.id))}
+              onNotice={onNotice}
+              onError={onError}
             />
           ))
         )}

@@ -3,6 +3,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
+from app.deps import get_current_user
 from app.models import Raffle, Ticket
 from app.schemas import (
     SendTicketRequest,
@@ -16,7 +17,11 @@ from app.services.ticket_generator import generate_ticket_number
 from app.services.ticket_image_service import generate_ticket_image
 from app.services.whatsapp_service import build_whatsapp_url
 
-router = APIRouter(prefix="/api/tickets", tags=["tickets"])
+router = APIRouter(
+    prefix="/api/tickets",
+    tags=["tickets"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def _ticket_to_response(ticket: Ticket) -> TicketResponse:

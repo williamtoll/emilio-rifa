@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.deps import get_current_user
 from app.models import Raffle, Ticket
 from app.schemas import RaffleCreate, RaffleResponse, RaffleUpdate
 
-router = APIRouter(prefix="/api/raffles", tags=["raffles"])
+router = APIRouter(
+    prefix="/api/raffles",
+    tags=["raffles"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def _raffle_to_response(raffle: Raffle, db: Session) -> RaffleResponse:

@@ -15,5 +15,10 @@ class Settings(BaseSettings):
 
     app_base_url: str = "http://localhost:5173"
 
+    admin_username: str = "admin"
+    admin_password: str = "admin123"
+    jwt_secret: str = "cambia-este-secreto-en-produccion"
+    jwt_expire_minutes: int = 60 * 24
+
 
 settings = Settings()

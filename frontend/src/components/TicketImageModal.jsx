@@ -1,13 +1,13 @@
-import { ticketsApi } from '../api'
+import { useTicketImage } from '../hooks/useTicketImage'
 import './TicketImageModal.css'
 
 export default function TicketImageModal({ ticket, onClose }) {
-  const imageUrl = ticketsApi.imageUrl(ticket.id)
-  const downloadUrl = `${imageUrl}?t=${Date.now()}`
+  const { imageUrl, loading, error } = useTicketImage(ticket.id)
 
   const handleDownload = () => {
+    if (!imageUrl) return
     const link = document.createElement('a')
-    link.href = downloadUrl
+    link.href = imageUrl
     link.download = `ticket-${ticket.ticket_number}.png`
     link.click()
   }
@@ -22,15 +22,19 @@ export default function TicketImageModal({ ticket, onClose }) {
           </button>
         </div>
         <div className="ticket-image-preview">
-          <img src={imageUrl} alt={`Ticket ${ticket.ticket_number}`} />
+          {loading && <p className="ticket-image-status">Cargando imagen...</p>}
+          {error && <p className="ticket-image-status error">{error}</p>}
+          {imageUrl && <img src={imageUrl} alt={`Ticket ${ticket.ticket_number}`} />}
         </div>
         <p className="ticket-image-hint">El código QR contiene los datos del ticket para verificación.</p>
         <div className="modal-actions">
-          <a href={downloadUrl} download={`ticket-${ticket.ticket_number}.png`} className="btn btn-primary">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleDownload}
+            disabled={!imageUrl}
+          >
             Descargar imagen
-          </a>
-          <button type="button" className="btn btn-secondary" onClick={handleDownload}>
-            Guardar PNG
           </button>
         </div>
       </div>

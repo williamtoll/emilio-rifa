@@ -1,10 +1,29 @@
+import { clearToken, getToken } from './auth'
+
 const API = '/api'
 
+function onUnauthorized() {
+  clearToken()
+  window.location.reload()
+}
+
 async function request(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  })
+  const token = getToken()
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  }
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const res = await fetch(`${API}${path}`, { ...options, headers })
+
+  if (res.status === 401 && !path.startsWith('/auth/login')) {
+    onUnauthorized()
+    throw new Error('Sesión expirada. Inicia sesión de nuevo.')
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     const detail = err.detail
@@ -15,6 +34,15 @@ async function request(path, options = {}) {
   }
   if (res.status === 204) return null
   return res.json()
+}
+
+export const authApi = {
+  login: (username, password) =>
+    request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  me: () => request('/auth/me'),
 }
 
 export const rafflesApi = {
@@ -40,5 +68,17 @@ export const ticketsApi = {
     const params = message ? `?message=${encodeURIComponent(message)}` : ''
     return request(`/tickets/${id}/whatsapp-link${params}`)
   },
-  imageUrl: (id) => `${API}/tickets/${id}/image`,
+  fetchImage: async (id) => {
+    const token = getToken()
+    const res = await fetch(`${API}/tickets/${id}/image`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (res.status === 401) {
+      onUnauthorized()
+      throw new Error('Sesión expirada')
+    }
+    if (!res.ok) throw new Error('No se pudo cargar la imagen del ticket')
+    const blob = await res.blob()
+    return URL.createObjectURL(blob)
+  },
 }

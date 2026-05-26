@@ -9,6 +9,7 @@ Aplicación para gestionar sorteos, generar tickets y enviarlos por WhatsApp o c
 - **Estado de pago** por ticket (pagado / pendiente)
 - **Envío por WhatsApp** mediante enlace `wa.me` con el mensaje del ticket prellenado
 - **Envío por correo** con plantilla HTML (requiere configuración SMTP)
+- **Autenticación** con usuario/contraseña y token JWT
 
 ## Stack
 
@@ -29,6 +30,21 @@ docker compose up --build
 
 - **Frontend:** http://localhost:5173
 - **API:** http://localhost:8000/docs
+
+Credenciales por defecto: `admin` / `admin123` (configúralas en `.env`).
+
+## Autenticación
+
+Todas las rutas de la API (excepto `/api/health` y `/api/auth/login`) requieren un token JWT.
+
+Variables en `.env`:
+
+```
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=tu_contraseña_segura
+JWT_SECRET=un-secreto-largo-y-aleatorio
+JWT_EXPIRE_MINUTES=1440
+```
 
 ## Desarrollo local (sin Docker)
 
@@ -73,6 +89,8 @@ SMTP_FROM=La Rifa <tu_correo@gmail.com>
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
+| POST | `/api/auth/login` | Iniciar sesión |
+| GET | `/api/auth/me` | Usuario actual (requiere token) |
 | GET | `/api/raffles` | Listar sorteos |
 | POST | `/api/raffles` | Crear sorteo |
 | GET | `/api/tickets?raffle_id=1` | Tickets de un sorteo |

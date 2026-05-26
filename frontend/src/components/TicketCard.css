@@ -33,6 +33,11 @@
   object-fit: contain;
 }
 
+.ticket-thumb-loading {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
 .ticket-card.paid {
   border-left: 3px solid var(--success);
 }

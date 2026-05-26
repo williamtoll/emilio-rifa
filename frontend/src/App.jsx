@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { rafflesApi, ticketsApi } from './api'
+import { useAuth } from './contexts/AuthContext'
+import LoginPage from './components/LoginPage'
 import RaffleSidebar from './components/RaffleSidebar'
 import TicketPanel from './components/TicketPanel'
 import './App.css'
 
 export default function App() {
+  const { user, loading: authLoading, logout, isAuthenticated } = useAuth()
   const [raffles, setRaffles] = useState([])
   const [selectedRaffleId, setSelectedRaffleId] = useState(null)
   const [tickets, setTickets] = useState([])
@@ -43,19 +46,20 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (!isAuthenticated) return
     async function init() {
       setLoading(true)
       await loadRaffles()
       setLoading(false)
     }
     init()
-  }, [loadRaffles])
+  }, [isAuthenticated, loadRaffles])
 
   useEffect(() => {
-    if (selectedRaffleId) {
+    if (selectedRaffleId && isAuthenticated) {
       loadTickets(selectedRaffleId)
     }
-  }, [selectedRaffleId, loadTickets])
+  }, [selectedRaffleId, loadTickets, isAuthenticated])
 
   const selectedRaffle = raffles.find((r) => r.id === selectedRaffleId)
 
@@ -94,6 +98,19 @@ export default function App() {
     window.open(url, '_blank')
   }
 
+  if (authLoading) {
+    return (
+      <div className="app-loading">
+        <div className="spinner" />
+        <p>Cargando...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
+
   if (loading) {
     return (
       <div className="app-loading">
@@ -112,6 +129,12 @@ export default function App() {
             <h1>La Rifa</h1>
             <p>Gestión de tickets y sorteos</p>
           </div>
+        </div>
+        <div className="header-user">
+          <span className="header-username">{user?.username}</span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={logout}>
+            Cerrar sesión
+          </button>
         </div>
       </header>
 

@@ -1,0 +1,66 @@
+.raffle-sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.raffle-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.raffle-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.875rem 1rem;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.raffle-item:hover {
+  background: var(--surface-hover);
+}
+
+.raffle-item.active {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid var(--primary);
+}
+
+.raffle-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.raffle-stats {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.raffle-empty {
+  padding: 1.5rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}

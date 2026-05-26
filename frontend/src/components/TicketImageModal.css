@@ -1,0 +1,46 @@
+.ticket-image-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: var(--shadow);
+}
+
+.ticket-image-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.ticket-image-modal-header h2 {
+  font-size: 1.125rem;
+}
+
+.ticket-image-preview {
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.ticket-image-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.ticket-image-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0.75rem 0;
+}
+
+.ticket-image-modal .modal-actions {
+  justify-content: center;
+}

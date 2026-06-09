@@ -1,399 +1,609 @@
-.draw-view {
+/* ── Root: full-screen overlay ───────────────────────────────────────────── */
+.dv-root {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 72px);
-  background: var(--bg);
+  overflow-y: auto;
 }
 
-/* ── Topbar ── */
-.draw-topbar {
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.dv-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 2rem;
-  background: var(--surface);
+  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  background: var(--surface);
+  flex-shrink: 0;
+  gap: 1rem;
 }
 
-.draw-topbar-center {
+.dv-topbar-center {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
 }
 
-.draw-topbar-title {
-  font-size: 1rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.draw-raffle-select {
-  font-size: 0.875rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+.dv-back,
+.dv-reset {
+  background: transparent;
   border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.375rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  min-width: 90px;
+}
+
+.dv-back:hover { color: var(--text); border-color: var(--text-muted); }
+
+.dv-reset {
+  color: #f87171;
+  border-color: rgba(239,68,68,.35);
+}
+.dv-reset:hover:not(:disabled) { background: rgba(239,68,68,.08); }
+
+.dv-spacer { min-width: 90px; }
+
+.dv-select {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--bg);
   color: var(--text);
-  min-width: 200px;
   cursor: pointer;
+  max-width: 340px;
+  text-align: center;
 }
+.dv-select:focus { outline: none; border-color: var(--primary); }
 
-.draw-raffle-select:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-/* ── States ── */
-.draw-loading,
-.draw-empty {
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.dv-error {
+  margin: 0.75rem 1.5rem 0;
+  padding: 0.625rem 1rem;
+  background: rgba(239,68,68,.12);
+  border: 1px solid var(--danger);
+  color: #fca5a5;
+  border-radius: 10px;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.dv-error button { background: none; color: #fca5a5; font-size: 1rem; padding: 0; }
+
+/* ── Generic center ──────────────────────────────────────────────────────── */
+.dv-center {
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  flex: 1;
-  padding: 4rem 2rem;
-  color: var(--text-muted);
+  padding: 2rem 1rem;
+}
+
+/* ── INTRO ───────────────────────────────────────────────────────────────── */
+.dv-intro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  max-width: 520px;
+  width: 100%;
   text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.dv-intro-logo { font-size: 3rem; margin-bottom: 0.75rem; }
+
+.dv-intro-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.dv-intro-sub {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.dv-intro-warn {
+  color: var(--warning);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.dv-intro-prizes {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.dv-intro-prizes-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.dv-intro-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dv-intro-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   font-size: 0.9375rem;
 }
 
-.draw-empty span {
-  font-size: 2.5rem;
+.dv-intro-pos {
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 28px;
 }
 
-.draw-error {
-  margin: 1rem 2rem 0;
-  padding: 0.75rem 1rem;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--danger);
-  color: #fca5a5;
-  border-radius: var(--radius);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.875rem;
+.dv-intro-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
 }
 
-.draw-error button {
-  background: none;
-  color: #fca5a5;
-  font-size: 1rem;
-  padding: 0;
-  opacity: 0.7;
+.dv-intro-name {
+  font-weight: 500;
+  color: var(--text);
 }
 
-/* ── Body ── */
-.draw-body {
-  padding: 1.75rem 2rem 3rem;
-  max-width: 860px;
-  margin: 0 auto;
+.dv-btn-start {
   width: 100%;
+  padding: 0.875rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: .02em;
+}
+.dv-btn-start:hover { background: var(--primary-hover); }
+
+/* ── DRAWING STAGE ───────────────────────────────────────────────────────── */
+.dv-stage {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  align-items: center;
+  padding: 1.5rem 1rem 2rem;
+  gap: 1.5rem;
 }
 
-.draw-raffle-info h2 {
-  font-size: 1.5rem;
+/* Progress dots */
+.dv-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dv-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.dv-dot--done {
+  background: rgba(34,197,94,.5);
+}
+
+.dv-dot--current {
+  background: var(--primary);
+  transform: scale(1.4);
+  box-shadow: 0 0 8px rgba(139,92,246,.6);
+}
+
+/* Prize stage card */
+.dv-prize-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2.25rem 2rem;
+  box-shadow: var(--shadow);
+  gap: 0.75rem;
+}
+
+.dv-prize-order {
+  font-size: 0.75rem;
   font-weight: 700;
-  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--primary);
 }
 
-.draw-raffle-meta {
+.dv-prize-img-wrap {
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.dv-prize-img-wrap--revealed {
+  border-color: var(--primary);
+  box-shadow: 0 0 24px rgba(139,92,246,.35);
+}
+
+.dv-prize-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dv-prize-name {
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.dv-prize-desc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+/* ── IDLE ── */
+.dv-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding-top: 0.5rem;
+}
+
+.dv-ticket-placeholder {
+  width: 120px;
+  height: 72px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--border);
+}
+
+.dv-btn-draw {
+  padding: 1rem 2.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 4px 20px rgba(139,92,246,.4);
+}
+.dv-btn-draw:hover { background: var(--primary-hover); transform: translateY(-2px); }
+.dv-btn-draw:active { transform: translateY(0); }
+
+/* ── SPINNING ── */
+.dv-spinning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.dv-spin-num {
+  font-size: clamp(4rem, 14vw, 7rem);
+  font-weight: 900;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .1em;
+  line-height: 1;
+  animation: spin-pulse 0.13s ease-in-out infinite alternate;
+  text-shadow: 0 0 40px rgba(139,92,246,.5);
+}
+
+@keyframes spin-pulse {
+  from { opacity: .75; transform: scale(.97); }
+  to   { opacity: 1;   transform: scale(1);   }
+}
+
+.dv-spin-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+}
+
+/* ── REVEALED ── */
+.dv-revealed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  animation: reveal-in .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: scale(.8) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dv-winner-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--success);
+}
+
+.dv-winner-num {
+  font-size: clamp(3rem, 12vw, 5.5rem);
+  font-weight: 900;
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-shadow: 0 0 32px rgba(34,197,94,.45);
+}
+
+.dv-winner-name {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0.25rem;
+}
+
+.dv-winner-phone {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+.dv-revealed-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dv-btn-undo {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.dv-btn-undo:hover { color: #f87171; border-color: rgba(239,68,68,.4); }
+
+.dv-btn-next {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.dv-btn-next:hover { background: var(--primary-hover); }
+
+/* ── Previous winners recap ──────────────────────────────────────────────── */
+.dv-prev {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.875rem 1.25rem;
+}
+
+.dv-prev-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  margin-bottom: 0.625rem;
+}
+
+.dv-prev-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.dv-prev-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8125rem;
-  color: var(--text-muted);
   flex-wrap: wrap;
 }
 
-.dot {
-  color: var(--border);
-}
+.dv-prev-prize { color: var(--text-muted); flex: 1; min-width: 100px; }
+.dv-prev-sep   { color: var(--border); }
+.dv-prev-ticket { font-weight: 700; color: var(--success); font-variant-numeric: tabular-nums; }
+.dv-prev-buyer  { color: var(--text); font-weight: 500; }
 
-.draw-progress {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.draw-complete-banner {
-  margin-top: 0.875rem;
-  padding: 0.625rem 1rem;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  border-radius: 8px;
-  color: #86efac;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  display: inline-block;
-}
-
-/* ── Section titles ── */
-.draw-section-title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin-bottom: 0.875rem;
-}
-
-/* ── Prize cards ── */
-.draw-prizes-list {
+/* ── DONE ────────────────────────────────────────────────────────────────── */
+.dv-done {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  align-items: center;
+  padding: 2rem 1rem 3rem;
+  gap: 2rem;
 }
 
-.prize-card {
+.dv-done-header {
+  text-align: center;
+}
+
+.dv-done-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+.dv-done-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.375rem;
+}
+
+.dv-done-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.dv-done-results {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.dv-done-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 14px;
   padding: 1rem 1.25rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  flex-wrap: wrap;
 }
 
-.prize-card--next {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.25), 0 4px 16px rgba(139, 92, 246, 0.1);
-}
-
-.prize-card--won {
-  border-color: rgba(34, 197, 94, 0.5);
-  background: rgba(34, 197, 94, 0.04);
-}
-
-.prize-card-left {
+.dv-done-row-prize {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.875rem;
   flex: 1;
-  min-width: 0;
+  min-width: 160px;
 }
 
-.prize-card-img {
-  width: 64px;
-  height: 64px;
+.dv-done-prize-img {
+  width: 52px;
+  height: 52px;
   object-fit: cover;
   border-radius: 8px;
-  flex-shrink: 0;
   border: 1px solid var(--border);
-}
-
-.prize-card-img-placeholder {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  background: var(--surface-hover);
-  border-radius: 8px;
   flex-shrink: 0;
-  border: 1px solid var(--border);
 }
 
-.prize-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.prize-card-pos {
-  font-size: 0.72rem;
+.dv-done-pos {
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: .06em;
   color: var(--primary);
+  margin-bottom: 2px;
 }
 
-.prize-card-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.prize-card-desc {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-.prize-card-right {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-/* ── Draw button ── */
-.btn-draw {
-  background: var(--surface-hover);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.5rem 1.25rem;
+.dv-done-prize-name {
   font-size: 0.9375rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
+  color: var(--text);
 }
 
-.btn-draw--active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-.btn-draw--active:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-/* ── Spinning animation ── */
-.prize-spinning {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 100px;
-}
-
-.spinning-num {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-  animation: pulse 0.15s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-  from { opacity: 0.7; transform: scale(0.96); }
-  to   { opacity: 1;   transform: scale(1);    }
-}
-
-.spinning-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* ── Winner display ── */
-.prize-winner {
+.dv-done-row-winner {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
-  min-width: 130px;
+  gap: 2px;
 }
 
-.prize-winner-num {
-  font-size: 1.5rem;
+.dv-done-ticket {
+  font-size: 1.375rem;
   font-weight: 800;
   color: var(--success);
   font-variant-numeric: tabular-nums;
 }
 
-.prize-winner-name {
+.dv-done-buyer {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text);
-  text-align: right;
 }
 
-.prize-winner-phone {
+.dv-done-phone {
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
-.btn-ghost-danger {
-  background: none;
-  border: 1px solid transparent;
-  color: #f87171;
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 2px;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.btn-ghost-danger:hover:not(:disabled) {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
-}
-
-/* ── History table ── */
-.draw-history-section {
-  border-top: 1px solid var(--border);
-  padding-top: 1.5rem;
-}
-
-.draw-history-table {
-  width: 100%;
-  border-collapse: collapse;
+.dv-done-missing {
   font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
-.draw-history-table th {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.72rem;
+.dv-done-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dv-btn-reset {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.dv-btn-reset:hover:not(:disabled) { color: #f87171; border-color: rgba(239,68,68,.4); }
+
+.dv-btn-back-done {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
 }
-
-.draw-history-table td {
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid rgba(46, 46, 61, 0.5);
-  vertical-align: middle;
-}
-
-.draw-history-table tr:last-child td {
-  border-bottom: none;
-}
-
-.draw-history-table tr:hover td {
-  background: var(--surface-hover);
-}
-
-.history-idx {
-  color: var(--text-muted);
-  font-size: 0.8125rem;
-  width: 32px;
-}
-
-.history-prize {
-  font-weight: 600;
-  color: var(--text);
-}
-
-.history-ticket {
-  font-weight: 700;
-  color: var(--success);
-  font-variant-numeric: tabular-nums;
-}
-
-.history-buyer {
-  color: var(--text);
-}
-
-.history-phone {
-  color: var(--text-muted);
-  font-size: 0.8125rem;
-}
+.dv-btn-back-done:hover { background: var(--primary-hover); }

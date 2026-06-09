@@ -46,6 +46,39 @@
   color: var(--text-muted);
 }
 
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.app-nav-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 7px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.app-nav-btn:hover:not(.app-nav-btn--active) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.app-nav-btn--active {
+  background: var(--primary);
+  color: white;
+}
+
 .app-banner {
   margin: 1rem 2rem 0;
   display: flex;

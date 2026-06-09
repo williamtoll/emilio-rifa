@@ -6,6 +6,31 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from app.utils.phone import normalize_paraguay_phone
 
 
+class PrizeBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    description: str | None = None
+    order: int = 0
+
+
+class PrizeCreate(PrizeBase):
+    pass
+
+
+class PrizeUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=200)
+    description: str | None = None
+    order: int | None = None
+
+
+class PrizeResponse(PrizeBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    raffle_id: int
+    image_filename: str | None = None
+    image_url: str | None = None
+
+
 class RaffleBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = None
@@ -31,6 +56,7 @@ class RaffleResponse(RaffleBase):
     created_at: datetime
     ticket_count: int = 0
     paid_count: int = 0
+    prizes: list[PrizeResponse] = []
 
 
 class TicketBase(BaseModel):
@@ -92,6 +118,22 @@ class PublicTicketResponse(BaseModel):
     raffle_name: str
     ticket_price: Decimal
     is_paid: bool
+    prizes: list[PrizeResponse] = []
+
+
+class DrawResultResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    raffle_id: int
+    prize_id: int
+    prize_name: str
+    prize_order: int
+    ticket_id: int
+    ticket_number: str
+    buyer_name: str
+    buyer_phone: str | None = None
+    drawn_at: datetime
 
 
 class SendTicketRequest(BaseModel):

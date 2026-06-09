@@ -9,7 +9,6 @@ from app.services.ticket_urls import get_short_ticket_url
 from app.utils.currency import format_guaranies
 
 WIDTH = 420
-HEIGHT = 640
 PURPLE = (124, 58, 237)
 PURPLE_DARK = (91, 33, 182)
 WHITE = (255, 255, 255)
@@ -18,6 +17,7 @@ TEXT = (31, 41, 55)
 MUTED = (107, 114, 128)
 GREEN = (22, 163, 74)
 YELLOW = (202, 138, 4)
+PRIZE_GOLD = (161, 110, 0)
 
 
 def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -72,11 +72,7 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
     status_text = "PAGADO" if paid else "PENDIENTE"
     status_color = GREEN if paid else YELLOW
 
-    img = Image.new("RGB", (WIDTH, HEIGHT), BG)
-    draw = ImageDraw.Draw(img)
-
-    draw.rectangle([(0, 0), (WIDTH, 88)], fill=PURPLE)
-    draw.rectangle([(0, 88), (WIDTH, 92)], fill=PURPLE_DARK)
+    prizes = sorted(raffle.prizes, key=lambda p: p.order) if getattr(raffle, "prizes", None) else []
 
     font_title = _load_font(26, bold=True)
     font_brand = _load_font(14)
@@ -84,6 +80,24 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
     font_label = _load_font(12)
     font_value = _load_font(16, bold=True)
     font_status = _load_font(13, bold=True)
+    font_prize_label = _load_font(11, bold=True)
+    font_prize_name = _load_font(14)
+
+    prizes_section_height = 0
+    if prizes:
+        prizes_section_height = 12 + 18 + 4 + len(prizes) * 22 + 8
+
+    QR_SIZE = 140
+    QR_BOTTOM_PADDING = 56
+    FOOTER_H = 30
+    FIXED_ABOVE_QR = 92 + 16 + 92 + 20 + 3 * 50 + 40
+    HEIGHT = max(640, FIXED_ABOVE_QR + prizes_section_height + QR_SIZE + QR_BOTTOM_PADDING + FOOTER_H)
+
+    img = Image.new("RGB", (WIDTH, HEIGHT), BG)
+    draw = ImageDraw.Draw(img)
+
+    draw.rectangle([(0, 0), (WIDTH, 88)], fill=PURPLE)
+    draw.rectangle([(0, 88), (WIDTH, 92)], fill=PURPLE_DARK)
 
     draw.text((WIDTH // 2, 28), "La Rifa", font=font_title, fill=WHITE, anchor="mm")
     draw.text((WIDTH // 2, 58), "TICKET DE SORTEO", font=font_brand, fill=(220, 210, 255), anchor="mm")
@@ -118,17 +132,30 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
         anchor="mm",
     )
 
+    y = badge_y + badge_h + 12
+
+    if prizes:
+        draw.line([(36, y + 6), (WIDTH - 36, y + 6)], fill=(220, 215, 240), width=1)
+        y += 12
+        draw.text((36, y), "PREMIOS", font=font_prize_label, fill=PRIZE_GOLD)
+        y += 18 + 4
+        for i, prize in enumerate(prizes):
+            bullet = f"{i + 1}."
+            draw.text((36, y), bullet, font=font_prize_name, fill=PRIZE_GOLD)
+            _draw_wrapped_text(draw, prize.name, (56, y), font_prize_name, TEXT, WIDTH - 92)
+            y += 22
+        y += 8
+
     qr = qrcode.QRCode(version=None, error_correction=ERROR_CORRECT_M, box_size=4, border=2)
     qr.add_data(build_qr_payload(ticket))
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-    qr_size = 140
-    qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+    qr_img = qr_img.resize((QR_SIZE, QR_SIZE), Image.Resampling.LANCZOS)
 
-    qr_x = (WIDTH - qr_size) // 2
-    qr_y = HEIGHT - qr_size - 56
+    qr_x = (WIDTH - QR_SIZE) // 2
+    qr_y = HEIGHT - QR_SIZE - QR_BOTTOM_PADDING
     draw.rounded_rectangle(
-        [(qr_x - 8, qr_y - 8), (qr_x + qr_size + 8, qr_y + qr_size + 8)],
+        [(qr_x - 8, qr_y - 8), (qr_x + QR_SIZE + 8, qr_y + QR_SIZE + 8)],
         radius=10,
         fill=WHITE,
         outline=PURPLE,

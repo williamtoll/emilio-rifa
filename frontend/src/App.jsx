@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 import LoginPage from './components/LoginPage'
 import RaffleSidebar from './components/RaffleSidebar'
 import TicketPanel from './components/TicketPanel'
+import DrawView from './components/DrawView'
 import './App.css'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [view, setView] = useState('tickets')
 
   const showNotice = (msg) => {
     setNotice(msg)
@@ -98,6 +100,12 @@ export default function App() {
     window.open(url, '_blank')
   }
 
+  const handlePrizesChange = (updatedPrizes) => {
+    setRaffles((prev) =>
+      prev.map((r) => (r.id === selectedRaffleId ? { ...r, prizes: updatedPrizes } : r))
+    )
+  }
+
   if (authLoading) {
     return (
       <div className="app-loading">
@@ -130,6 +138,20 @@ export default function App() {
             <p>Gestión de tickets y sorteos</p>
           </div>
         </div>
+        <nav className="app-nav">
+          <button
+            className={`app-nav-btn ${view === 'tickets' ? 'app-nav-btn--active' : ''}`}
+            onClick={() => setView('tickets')}
+          >
+            🎟️ Tickets
+          </button>
+          <button
+            className={`app-nav-btn ${view === 'draw' ? 'app-nav-btn--active' : ''}`}
+            onClick={() => setView('draw')}
+          >
+            🎰 Sortear
+          </button>
+        </nav>
         <div className="header-user">
           <span className="header-username">{user?.username}</span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={logout}>
@@ -146,25 +168,34 @@ export default function App() {
       )}
       {notice && <div className="success-banner app-banner">{notice}</div>}
 
-      <div className="app-layout">
-        <RaffleSidebar
+      {view === 'draw' ? (
+        <DrawView
+          initialRaffleId={selectedRaffleId}
           raffles={raffles}
-          selectedId={selectedRaffleId}
-          onSelect={setSelectedRaffleId}
-          onCreate={handleCreateRaffle}
-          onError={setError}
+          onBack={() => setView('tickets')}
         />
-        <TicketPanel
-          raffle={selectedRaffle}
-          tickets={tickets}
-          onCreateTicket={handleCreateTicket}
-          onTogglePaid={handleTogglePaid}
-          onSendEmail={handleSendEmail}
-          onWhatsApp={handleWhatsApp}
-          onError={setError}
-          onNotice={showNotice}
-        />
-      </div>
+      ) : (
+        <div className="app-layout">
+          <RaffleSidebar
+            raffles={raffles}
+            selectedId={selectedRaffleId}
+            onSelect={setSelectedRaffleId}
+            onCreate={handleCreateRaffle}
+            onError={setError}
+          />
+          <TicketPanel
+            raffle={selectedRaffle}
+            tickets={tickets}
+            onCreateTicket={handleCreateTicket}
+            onTogglePaid={handleTogglePaid}
+            onSendEmail={handleSendEmail}
+            onWhatsApp={handleWhatsApp}
+            onError={setError}
+            onNotice={showNotice}
+            onPrizesChange={handlePrizesChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import TicketCard from './TicketCard'
+import PrizesManager from './PrizesManager'
 import { formatGuaranies } from '../utils/currency'
 import {
   formatParaguayPhoneInput,
@@ -17,6 +18,7 @@ export default function TicketPanel({
   onWhatsApp,
   onError,
   onNotice,
+  onPrizesChange,
 }) {
   const [showForm, setShowForm] = useState(false)
   const [buyerName, setBuyerName] = useState('')
@@ -80,7 +82,7 @@ export default function TicketPanel({
   return (
     <main className="ticket-panel">
       <div className="panel-header">
-        <div>
+        <div className="panel-header-info">
           <h2>{raffle.name}</h2>
           {raffle.description && <p className="panel-desc">{raffle.description}</p>}
           <div className="panel-meta">
@@ -89,6 +91,13 @@ export default function TicketPanel({
             <span className="paid-count">{paid} pagados</span>
             <span className="unpaid-count">{unpaid} pendientes</span>
           </div>
+          {onPrizesChange && (
+            <PrizesManager
+              raffle={raffle}
+              onPrizesChange={onPrizesChange}
+              onError={onError}
+            />
+          )}
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>
           + Generar ticket

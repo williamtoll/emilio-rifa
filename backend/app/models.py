@@ -18,6 +18,35 @@ class Raffle(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     tickets: Mapped[list["Ticket"]] = relationship("Ticket", back_populates="raffle", cascade="all, delete-orphan")
+    prizes: Mapped[list["Prize"]] = relationship("Prize", back_populates="raffle", cascade="all, delete-orphan", order_by="Prize.order")
+
+
+class Prize(Base):
+    __tablename__ = "prizes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    raffle_id: Mapped[int] = mapped_column(ForeignKey("raffles.id", ondelete="CASCADE"), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+
+    raffle: Mapped["Raffle"] = relationship("Raffle", back_populates="prizes")
+
+
+class DrawResult(Base):
+    __tablename__ = "draw_results"
+    __table_args__ = (UniqueConstraint("raffle_id", "prize_id", name="uq_draw_raffle_prize"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    raffle_id: Mapped[int] = mapped_column(ForeignKey("raffles.id", ondelete="CASCADE"), nullable=False)
+    prize_id: Mapped[int] = mapped_column(ForeignKey("prizes.id", ondelete="CASCADE"), nullable=False)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False)
+    drawn_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    raffle: Mapped["Raffle"] = relationship("Raffle")
+    prize: Mapped["Prize"] = relationship("Prize")
+    ticket: Mapped["Ticket"] = relationship("Ticket")
 
 
 class Ticket(Base):

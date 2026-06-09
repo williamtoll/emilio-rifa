@@ -137,7 +137,12 @@ async def send_email(ticket_id: int, body: SendTicketRequest = SendTicketRequest
 
 @router.get("/{ticket_id}/image")
 def get_ticket_image(ticket_id: int, db: Session = Depends(get_db)):
-    ticket = db.query(Ticket).options(joinedload(Ticket.raffle)).filter(Ticket.id == ticket_id).first()
+    ticket = (
+        db.query(Ticket)
+        .options(joinedload(Ticket.raffle).joinedload(Raffle.prizes))
+        .filter(Ticket.id == ticket_id)
+        .first()
+    )
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     if not ticket.is_paid:

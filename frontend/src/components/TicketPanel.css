@@ -19,6 +19,11 @@
   flex-wrap: wrap;
 }
 
+.panel-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .panel-header h2 {
   font-size: 1.5rem;
   font-weight: 700;

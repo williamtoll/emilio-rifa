@@ -84,6 +84,47 @@ export const ticketsApi = {
   publicLink: (id) => request(`/tickets/${id}/public-link`),
 }
 
+export const drawsApi = {
+  list: (raffleId) => request(`/raffles/${raffleId}/draw-results`),
+  draw: (raffleId, prizeId) =>
+    request(`/raffles/${raffleId}/draw-results/${prizeId}`, { method: 'POST' }),
+  undoPrize: (raffleId, prizeId) =>
+    request(`/raffles/${raffleId}/draw-results/${prizeId}`, { method: 'DELETE' }),
+  resetAll: (raffleId) =>
+    request(`/raffles/${raffleId}/draw-results`, { method: 'DELETE' }),
+}
+
+export const prizesApi = {
+  list: (raffleId) => request(`/raffles/${raffleId}/prizes`),
+  create: (raffleId, data) =>
+    request(`/raffles/${raffleId}/prizes`, { method: 'POST', body: JSON.stringify(data) }),
+  update: (raffleId, prizeId, data) =>
+    request(`/raffles/${raffleId}/prizes/${prizeId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (raffleId, prizeId) =>
+    request(`/raffles/${raffleId}/prizes/${prizeId}`, { method: 'DELETE' }),
+  uploadImage: async (raffleId, prizeId, file) => {
+    const token = getToken()
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${API}/raffles/${raffleId}/prizes/${prizeId}/image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    })
+    if (res.status === 401) {
+      onUnauthorized()
+      throw new Error('Sesión expirada')
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }))
+      throw new Error(err.detail || 'Error al subir la imagen')
+    }
+    return res.json()
+  },
+  deleteImage: (raffleId, prizeId) =>
+    request(`/raffles/${raffleId}/prizes/${prizeId}/image`, { method: 'DELETE' }),
+}
+
 export const publicApi = {
   getTicket: (publicId) =>
     fetch(`${API}/public/tickets/${publicId}`).then(async (res) => {

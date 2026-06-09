@@ -87,6 +87,34 @@ export default function PublicTicketPage({ publicId }) {
           </p>
           <span className="badge badge-paid">Pagado</span>
         </div>
+
+        {ticket.prizes && ticket.prizes.length > 0 && (
+          <div className="public-prizes">
+            <h2 className="public-prizes-title">🏆 Premios</h2>
+            <ul className="public-prizes-list">
+              {ticket.prizes.map((prize, idx) => (
+                <li key={prize.id} className="public-prize-item">
+                  {prize.image_url && (
+                    <img
+                      src={prize.image_url}
+                      alt={prize.name}
+                      className="public-prize-img"
+                    />
+                  )}
+                  <div className="public-prize-info">
+                    <span className="public-prize-pos">{idx + 1}°</span>
+                    <div>
+                      <p className="public-prize-name">{prize.name}</p>
+                      {prize.description && (
+                        <p className="public-prize-desc">{prize.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )

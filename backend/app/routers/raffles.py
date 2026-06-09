@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import Raffle, Ticket
-from app.schemas import RaffleCreate, RaffleResponse, RaffleUpdate
+from app.models import Prize, Raffle, Ticket
+from app.schemas import PrizeResponse, RaffleCreate, RaffleResponse, RaffleUpdate
 
 router = APIRouter(
     prefix="/api/raffles",
@@ -13,8 +14,15 @@ router = APIRouter(
 )
 
 
+def _prize_image_url(prize: Prize) -> str | None:
+    if not prize.image_filename:
+        return None
+    return f"{settings.app_base_url}/uploads/prizes/{prize.image_filename}"
+
+
 def _raffle_to_response(raffle: Raffle, db: Session) -> RaffleResponse:
     tickets = db.query(Ticket).filter(Ticket.raffle_id == raffle.id).all()
+    prizes = db.query(Prize).filter(Prize.raffle_id == raffle.id).order_by(Prize.order).all()
     return RaffleResponse(
         id=raffle.id,
         name=raffle.name,
@@ -24,6 +32,18 @@ def _raffle_to_response(raffle: Raffle, db: Session) -> RaffleResponse:
         created_at=raffle.created_at,
         ticket_count=len(tickets),
         paid_count=sum(1 for t in tickets if t.is_paid),
+        prizes=[
+            PrizeResponse(
+                id=p.id,
+                raffle_id=p.raffle_id,
+                name=p.name,
+                description=p.description,
+                order=p.order,
+                image_filename=p.image_filename,
+                image_url=_prize_image_url(p),
+            )
+            for p in prizes
+        ],
     )
 
 

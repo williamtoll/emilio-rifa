@@ -26,6 +26,7 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
   const [spinNum, setSpinNum] = useState('????')
   const [error, setError] = useState(null)
   const [resetting, setResetting] = useState(false)
+  const [closing, setClosing] = useState(false)
   const spinRef = useRef(null)
 
   // ── Load raffle + existing results ──────────────────────────────────────────
@@ -43,7 +44,11 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
       setSortedPrizes(prizes)
       setResults(resMap)
 
-      if (prizes.length === 0) {
+      if (r.draw_closed_at) {
+        setCurrentIdx(Math.max(0, prizes.length - 1))
+        setDrawState(DS.REVEALED)
+        setPhase(P.DONE)
+      } else if (prizes.length === 0) {
         setPhase(P.INTRO)
       } else if (nextIdx === -1) {
         // All drawn already
@@ -70,6 +75,7 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
 
   // ── Draw ────────────────────────────────────────────────────────────────────
   const handleDraw = async () => {
+    if (raffle?.draw_closed_at) return
     const prize = sortedPrizes[currentIdx]
     setDrawState(DS.SPINNING)
     setSpinNum(rndNum())
@@ -114,6 +120,7 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
   }
 
   const handleReset = async () => {
+    if (raffle?.draw_closed_at) return
     if (!window.confirm('¿Reiniciar todos los resultados del sorteo?')) return
     setResetting(true)
     try {
@@ -129,7 +136,27 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
     }
   }
 
+  const handleCloseDraw = async () => {
+    if (
+      !window.confirm(
+        '¿Cerrar el sorteo definitivamente? No se podrá volver a sortear ni modificar los resultados.',
+      )
+    ) {
+      return
+    }
+    setClosing(true)
+    try {
+      const updated = await drawsApi.close(selectedId)
+      setRaffle(updated)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setClosing(false)
+    }
+  }
+
   const handleUndoCurrent = async () => {
+    if (raffle?.draw_closed_at) return
     const prize = sortedPrizes[currentIdx]
     try {
       await drawsApi.undoPrize(selectedId, prize.id)
@@ -145,6 +172,8 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
   const currentResult = currentPrize ? results[currentPrize.id] : null
   const drawnCount = Object.keys(results).length
   const totalPrizes = sortedPrizes.length
+  const isClosed = !!raffle?.draw_closed_at
+  const allDrawn = totalPrizes > 0 && drawnCount === totalPrizes
 
   // prizes that were drawn before the current one (to show as mini recap)
   const prevWinners = sortedPrizes
@@ -166,16 +195,18 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
             onChange={(e) => setSelectedId(Number(e.target.value))}
           >
             {raffles.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
+              <option key={r.id} value={r.id}>
+                {r.name}{r.draw_closed_at ? ' (cerrado)' : ''}
+              </option>
             ))}
           </select>
         </div>
-        {drawnCount > 0 && phase !== P.DONE && (
+        {drawnCount > 0 && phase !== P.DONE && !isClosed && (
           <button className="dv-reset" onClick={handleReset} disabled={resetting}>
             {resetting ? '...' : 'Reiniciar'}
           </button>
         )}
-        {(drawnCount === 0 || phase === P.DONE) && <div className="dv-spacer" />}
+        {(drawnCount === 0 || phase === P.DONE || isClosed) && <div className="dv-spacer" />}
       </div>
 
       {error && (
@@ -232,7 +263,7 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
       )}
 
       {/* ── DRAWING ── */}
-      {phase === P.DRAWING && currentPrize && (
+      {phase === P.DRAWING && currentPrize && !isClosed && (
         <div className="dv-stage">
           {/* Progress dots */}
           <div className="dv-progress">
@@ -293,9 +324,11 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
                   <div className="dv-winner-phone">{currentResult.buyer_phone}</div>
                 )}
                 <div className="dv-revealed-actions">
-                  <button className="dv-btn-undo" onClick={handleUndoCurrent}>
-                    Repetir sorteo
-                  </button>
+                  {!isClosed && (
+                    <button className="dv-btn-undo" onClick={handleUndoCurrent}>
+                      Repetir sorteo
+                    </button>
+                  )}
                   {currentIdx + 1 < totalPrizes ? (
                     <button className="dv-btn-next" onClick={handleNext}>
                       Siguiente Premio →
@@ -333,9 +366,16 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
       {phase === P.DONE && (
         <div className="dv-done">
           <div className="dv-done-header">
-            <div className="dv-done-icon">🎉</div>
-            <h1 className="dv-done-title">¡Sorteo Completado!</h1>
+            <div className="dv-done-icon">{isClosed ? '🔒' : '🎉'}</div>
+            <h1 className="dv-done-title">
+              {isClosed ? 'Sorteo Cerrado' : '¡Sorteo Completado!'}
+            </h1>
             <p className="dv-done-sub">{raffle?.name}</p>
+            {isClosed && (
+              <p className="dv-done-closed-note">
+                Los resultados son definitivos y no se pueden modificar.
+              </p>
+            )}
           </div>
 
           <div className="dv-done-results">
@@ -371,9 +411,20 @@ export default function DrawView({ initialRaffleId, raffles, onBack }) {
           </div>
 
           <div className="dv-done-actions">
-            <button className="dv-btn-reset" onClick={handleReset} disabled={resetting}>
-              {resetting ? '...' : '↺ Nuevo sorteo'}
-            </button>
+            {!isClosed && allDrawn && (
+              <button
+                className="dv-btn-close"
+                onClick={handleCloseDraw}
+                disabled={closing}
+              >
+                {closing ? 'Cerrando...' : '🔒 Cerrar sorteo definitivamente'}
+              </button>
+            )}
+            {!isClosed && (
+              <button className="dv-btn-reset" onClick={handleReset} disabled={resetting}>
+                {resetting ? '...' : '↺ Nuevo sorteo'}
+              </button>
+            )}
             <button className="dv-btn-back-done" onClick={onBack}>
               Volver a tickets
             </button>

@@ -16,6 +16,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [view, setView] = useState('tickets')
+  const [editRaffleId, setEditRaffleId] = useState(null)
 
   const showNotice = (msg) => {
     setNotice(msg)
@@ -70,6 +71,14 @@ export default function App() {
     await loadRaffles()
     setSelectedRaffleId(created.id)
     showNotice(`Sorteo "${created.name}" creado`)
+    return created
+  }
+
+  const handleUpdateRaffle = async (id, data) => {
+    const updated = await rafflesApi.update(id, data)
+    await loadRaffles()
+    showNotice(`Sorteo "${updated.name}" actualizado`)
+    return updated
   }
 
   const handleCreateTicket = async (data) => {
@@ -99,6 +108,8 @@ export default function App() {
     const { url } = await ticketsApi.whatsappLink(ticketId)
     window.open(url, '_blank')
   }
+
+  const clearEditRaffleId = useCallback(() => setEditRaffleId(null), [])
 
   const handlePrizesChange = (updatedPrizes) => {
     setRaffles((prev) =>
@@ -181,7 +192,11 @@ export default function App() {
             selectedId={selectedRaffleId}
             onSelect={setSelectedRaffleId}
             onCreate={handleCreateRaffle}
+            onUpdate={handleUpdateRaffle}
+            onRefresh={loadRaffles}
             onError={setError}
+            editRaffleId={editRaffleId}
+            onEditRaffleIdConsumed={clearEditRaffleId}
           />
           <TicketPanel
             raffle={selectedRaffle}
@@ -193,6 +208,7 @@ export default function App() {
             onError={setError}
             onNotice={showNotice}
             onPrizesChange={handlePrizesChange}
+            onEditRaffle={() => setEditRaffleId(selectedRaffleId)}
           />
         </div>
       )}

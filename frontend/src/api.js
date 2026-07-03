@@ -51,6 +51,26 @@ export const rafflesApi = {
   create: (data) => request('/raffles', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/raffles/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => request(`/raffles/${id}`, { method: 'DELETE' }),
+  uploadImage: async (id, file) => {
+    const token = getToken()
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${API}/raffles/${id}/image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    })
+    if (res.status === 401) {
+      onUnauthorized()
+      throw new Error('Sesión expirada')
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }))
+      throw new Error(err.detail || 'Error al subir la imagen')
+    }
+    return res.json()
+  },
+  deleteImage: (id) => request(`/raffles/${id}/image`, { method: 'DELETE' }),
 }
 
 export const ticketsApi = {
@@ -81,6 +101,22 @@ export const ticketsApi = {
     const blob = await res.blob()
     return URL.createObjectURL(blob)
   },
+  fetchPaymentProof: async (id) => {
+    const token = getToken()
+    const res = await fetch(`${API}/tickets/${id}/payment-proof`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (res.status === 401) {
+      onUnauthorized()
+      throw new Error('Sesión expirada')
+    }
+    if (!res.ok) throw new Error('No se pudo cargar el comprobante')
+    const blob = await res.blob()
+    return {
+      url: URL.createObjectURL(blob),
+      isPdf: blob.type === 'application/pdf',
+    }
+  },
   publicLink: (id) => request(`/tickets/${id}/public-link`),
 }
 
@@ -92,6 +128,8 @@ export const drawsApi = {
     request(`/raffles/${raffleId}/draw-results/${prizeId}`, { method: 'DELETE' }),
   resetAll: (raffleId) =>
     request(`/raffles/${raffleId}/draw-results`, { method: 'DELETE' }),
+  close: (raffleId) =>
+    request(`/raffles/${raffleId}/draw-results/close`, { method: 'POST' }),
 }
 
 export const prizesApi = {
@@ -126,6 +164,43 @@ export const prizesApi = {
 }
 
 export const publicApi = {
+  listRaffles: () =>
+    fetch(`${API}/public/raffles`).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || 'No se pudieron cargar los sorteos')
+      }
+      return res.json()
+    }),
+  getRaffle: (raffleId) =>
+    fetch(`${API}/public/raffles/${raffleId}`).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || 'Sorteo no encontrado')
+      }
+      return res.json()
+    }),
+  getAvailability: (raffleId) =>
+    fetch(`${API}/public/raffles/${raffleId}/availability`).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || 'No se pudo cargar disponibilidad')
+      }
+      return res.json()
+    }),
+  reserveTicket: (raffleId, data) =>
+    fetch(`${API}/public/raffles/${raffleId}/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        const detail = err.detail
+        throw new Error(Array.isArray(detail) ? detail.map((d) => d.msg || d).join(', ') : detail || 'Error al reservar')
+      }
+      return res.json()
+    }),
   getTicket: (publicId) =>
     fetch(`${API}/public/tickets/${publicId}`).then(async (res) => {
       if (!res.ok) {
@@ -139,5 +214,27 @@ export const publicApi = {
     if (!res.ok) throw new Error('No se pudo cargar la imagen del ticket')
     const blob = await res.blob()
     return URL.createObjectURL(blob)
+  },
+  getPaymentStatus: (publicId) =>
+    fetch(`${API}/public/tickets/${publicId}/payment`).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || 'Ticket no encontrado')
+      }
+      return res.json()
+    }),
+  uploadPaymentProof: async (publicId, file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${API}/public/tickets/${publicId}/payment-proof`, {
+      method: 'POST',
+      body: formData,
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }))
+      const detail = err.detail
+      throw new Error(Array.isArray(detail) ? detail.map((d) => d.msg || d).join(', ') : detail || 'Error al subir')
+    }
+    return res.json()
   },
 }

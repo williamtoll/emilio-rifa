@@ -26,7 +26,16 @@
   padding: 0.5rem;
 }
 
+.raffle-list-item {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 .raffle-item {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   text-align: left;
   padding: 0.875rem 1rem;
@@ -34,9 +43,119 @@
   color: var(--text);
   border-radius: 8px;
   display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border: 1px solid transparent;
+}
+
+.raffle-item-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.raffle-item-body {
+  display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-bottom: 0.25rem;
+  min-width: 0;
+}
+
+.raffle-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.raffle-image-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.raffle-image-placeholder {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.raffle-image-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-ghost-danger {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.btn-ghost-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.raffle-edit-btn {
+  flex-shrink: 0;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.raffle-edit-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+.raffle-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.badge-closed {
+  background: rgba(234, 179, 8, 0.2);
+  color: var(--warning);
+}
+
+.form-group-checkbox {
+  margin-bottom: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.9375rem;
+  margin-bottom: 0;
+}
+
+.checkbox-label input {
+  width: auto;
+  accent-color: var(--primary);
 }
 
 .raffle-item:hover {

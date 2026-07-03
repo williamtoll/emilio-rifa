@@ -22,6 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent  # backend/ root
 UPLOADS_DIR = BASE_DIR / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 (UPLOADS_DIR / "prizes").mkdir(parents=True, exist_ok=True)
+(UPLOADS_DIR / "raffles").mkdir(parents=True, exist_ok=True)
+(UPLOADS_DIR / "payment-proofs").mkdir(parents=True, exist_ok=True)
 
 
 def run_migrations() -> None:

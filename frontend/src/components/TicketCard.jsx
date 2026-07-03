@@ -3,6 +3,7 @@ import { useTicketImage } from '../hooks/useTicketImage'
 import { displayParaguayPhone } from '../utils/phone'
 import { shareTicketImage } from '../utils/shareTicket'
 import TicketImageModal from './TicketImageModal'
+import PaymentProofModal from './PaymentProofModal'
 import './TicketCard.css'
 
 export default function TicketCard({
@@ -15,6 +16,7 @@ export default function TicketCard({
   onError,
 }) {
   const [showImage, setShowImage] = useState(false)
+  const [showProof, setShowProof] = useState(false)
   const [sharing, setSharing] = useState(false)
   const isPaid = ticket.is_paid
   const { imageUrl, loading: imageLoading } = useTicketImage(ticket.id, isPaid)
@@ -72,11 +74,21 @@ export default function TicketCard({
             {ticket.buyer_phone && <span>📱 {displayParaguayPhone(ticket.buyer_phone)}</span>}
             {ticket.buyer_email && <span>✉️ {ticket.buyer_email}</span>}
           </div>
-          <span className={`badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}`}>
-            {isPaid ? 'Pagado' : 'Pendiente'}
-          </span>
+          <div className="ticket-badges">
+            <span className={`badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}`}>
+              {isPaid ? 'Pagado' : 'Pendiente'}
+            </span>
+            {!isPaid && ticket.has_payment_proof && (
+              <span className="badge badge-proof">Comprobante enviado</span>
+            )}
+          </div>
         </div>
         <div className="ticket-actions">
+          {!isPaid && ticket.has_payment_proof && (
+            <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowProof(true)}>
+              Ver comprobante
+            </button>
+          )}
           <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowImage(true)}>
             Ver ticket
           </button>
@@ -121,6 +133,9 @@ export default function TicketCard({
           )}
         </div>
       </article>
+      {showProof && (
+        <PaymentProofModal ticket={ticket} onClose={() => setShowProof(false)} />
+      )}
       {showImage && (
         <TicketImageModal
           ticket={ticket}

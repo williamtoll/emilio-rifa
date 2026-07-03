@@ -493,6 +493,15 @@
   color: var(--text-muted);
 }
 
+.dv-done-closed-note {
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--warning);
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .dv-done-results {
   width: 100%;
   max-width: 640px;
@@ -582,6 +591,20 @@
   flex-wrap: wrap;
   justify-content: center;
 }
+
+.dv-btn-close {
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.dv-btn-close:hover:not(:disabled) { filter: brightness(1.08); }
+.dv-btn-close:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .dv-btn-reset {
   background: transparent;

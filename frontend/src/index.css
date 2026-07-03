@@ -158,6 +158,11 @@ label {
   color: var(--warning);
 }
 
+.badge-proof {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
 .badge-inactive {
   background: rgba(152, 152, 173, 0.2);
   color: var(--text-muted);

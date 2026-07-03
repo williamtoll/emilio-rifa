@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
@@ -25,6 +27,16 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)],
 )
 
+PAYMENT_PROOFS_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "payment-proofs"
+PROOF_MEDIA = {
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "webp": "image/webp",
+    "gif": "image/gif",
+    "pdf": "application/pdf",
+}
+
 
 def _ticket_to_response(ticket: Ticket) -> TicketResponse:
     share_url = get_short_ticket_url(ticket) if ticket.is_paid and ticket.short_code else None
@@ -41,6 +53,8 @@ def _ticket_to_response(ticket: Ticket) -> TicketResponse:
         is_paid=ticket.is_paid,
         created_at=ticket.created_at,
         raffle_name=ticket.raffle.name if ticket.raffle else None,
+        has_payment_proof=bool(ticket.payment_proof_filename),
+        payment_proof_uploaded_at=ticket.payment_proof_uploaded_at,
     )
 
 
@@ -133,6 +147,25 @@ async def send_email(ticket_id: int, body: SendTicketRequest = SendTicketRequest
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"message": "Correo enviado correctamente"}
+
+
+@router.get("/{ticket_id}/payment-proof")
+def get_ticket_payment_proof(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if not ticket.payment_proof_filename:
+        raise HTTPException(status_code=404, detail="No hay comprobante de pago")
+    path = PAYMENT_PROOFS_DIR / ticket.payment_proof_filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    ext = path.suffix.lstrip(".").lower()
+    media_type = PROOF_MEDIA.get(ext, "application/octet-stream")
+    return Response(
+        content=path.read_bytes(),
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="comprobante-{ticket.ticket_number}.{ext}"'},
+    )
 
 
 @router.get("/{ticket_id}/image")

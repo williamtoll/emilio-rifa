@@ -19,6 +19,7 @@ export default function TicketPanel({
   onError,
   onNotice,
   onPrizesChange,
+  onEditRaffle,
 }) {
   const [showForm, setShowForm] = useState(false)
   const [buyerName, setBuyerName] = useState('')
@@ -78,19 +79,44 @@ export default function TicketPanel({
 
   const unpaid = tickets.filter((t) => !t.is_paid).length
   const paid = tickets.filter((t) => t.is_paid).length
+  const buyUrl = `${window.location.origin}/comprar/${raffle.id}`
+
+  const copyBuyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(buyUrl)
+      onNotice?.('Enlace de compra copiado')
+    } catch {
+      onError('No se pudo copiar el enlace')
+    }
+  }
 
   return (
     <main className="ticket-panel">
       <div className="panel-header">
         <div className="panel-header-info">
+          {raffle.image_url && (
+            <img src={raffle.image_url} alt={raffle.name} className="panel-raffle-image" />
+          )}
           <h2>{raffle.name}</h2>
           {raffle.description && <p className="panel-desc">{raffle.description}</p>}
           <div className="panel-meta">
             <span>Precio: {formatGuaranies(raffle.ticket_price)}</span>
             <span>{tickets.length} tickets</span>
+            {raffle.max_tickets && <span>{raffle.max_tickets} máx.</span>}
             <span className="paid-count">{paid} pagados</span>
             <span className="unpaid-count">{unpaid} pendientes</span>
           </div>
+          {raffle.is_active && !raffle.draw_closed_at && (
+            <div className="panel-buy-link">
+              <span className="panel-buy-label">Compra pública:</span>
+              <a href={buyUrl} target="_blank" rel="noreferrer" className="panel-buy-url">
+                {buyUrl}
+              </a>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={copyBuyLink}>
+                Copiar
+              </button>
+            </div>
+          )}
           {onPrizesChange && (
             <PrizesManager
               raffle={raffle}
@@ -99,9 +125,16 @@ export default function TicketPanel({
             />
           )}
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-          + Generar ticket
-        </button>
+        <div className="panel-header-actions">
+          {onEditRaffle && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onEditRaffle}>
+              Editar sorteo
+            </button>
+          )}
+          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            + Generar ticket
+          </button>
+        </div>
       </div>
 
       <div className="ticket-grid">

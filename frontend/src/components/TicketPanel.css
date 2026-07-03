@@ -24,6 +24,17 @@
   min-width: 0;
 }
 
+.panel-raffle-image {
+  width: 100%;
+  max-width: 280px;
+  max-height: 120px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+  background: var(--surface-hover);
+}
+
 .panel-header h2 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -33,6 +44,13 @@
   color: var(--text-muted);
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .panel-meta {
@@ -50,6 +68,36 @@
 
 .unpaid-count {
   color: var(--warning);
+}
+
+.panel-buy-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+.panel-buy-label {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.panel-buy-url {
+  color: var(--primary);
+  text-decoration: none;
+  word-break: break-all;
+  flex: 1;
+  min-width: 120px;
+}
+
+.panel-buy-url:hover {
+  text-decoration: underline;
 }
 
 .ticket-grid {

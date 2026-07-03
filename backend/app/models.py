@@ -15,6 +15,9 @@ class Raffle(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     ticket_price: Mapped[float] = mapped_column(Numeric(10, 2), default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    draw_closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    image_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    max_tickets: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     tickets: Mapped[list["Ticket"]] = relationship("Ticket", back_populates="raffle", cascade="all, delete-orphan")
@@ -64,6 +67,8 @@ class Ticket(Base):
     buyer_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     buyer_email: Mapped[str | None] = mapped_column(String(200), nullable=True)
     is_paid: Mapped[bool] = mapped_column(Boolean, default=False)
+    payment_proof_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    payment_proof_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     raffle: Mapped["Raffle"] = relationship("Raffle", back_populates="tickets")

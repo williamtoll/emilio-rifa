@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
@@ -9,6 +10,9 @@ from app.services.ticket_urls import get_short_ticket_url
 from app.utils.currency import format_guaranies
 
 WIDTH = 420
+RAFFLES_UPLOADS_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "raffles"
+RAFFLE_IMG_MAX_W = 372
+RAFFLE_IMG_MAX_H = 100
 PURPLE = (124, 58, 237)
 PURPLE_DARK = (91, 33, 182)
 WHITE = (255, 255, 255)
@@ -42,6 +46,33 @@ def _font_line_height(font) -> int:
     return getattr(font, "size", 14) + 4
 
 
+def _count_wrapped_lines(text: str, font, max_width: int) -> int:
+    words = text.split()
+    if not words:
+        return 1
+    lines = 1
+    current = ""
+    dummy = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    for word in words:
+        test = f"{current} {word}".strip()
+        bbox = dummy.textbbox((0, 0), test, font=font)
+        if bbox[2] - bbox[0] <= max_width:
+            current = test
+        else:
+            lines += 1
+            current = word
+    return lines
+
+
+def _estimate_fields_height(fields: list[tuple[str, str]], font_label, font_value, max_width: int) -> int:
+    total = 0
+    for _, value in fields:
+        total += 16
+        lines = _count_wrapped_lines(value, font_value, max_width)
+        total += lines * _font_line_height(font_value) + 12
+    return total
+
+
 def _draw_wrapped_text(draw: ImageDraw.ImageDraw, text: str, xy: tuple[int, int], font, fill, max_width: int):
     words = text.split()
     lines: list[str] = []
@@ -65,6 +96,26 @@ def _draw_wrapped_text(draw: ImageDraw.ImageDraw, text: str, xy: tuple[int, int]
     return y
 
 
+def _load_raffle_image(raffle) -> Image.Image | None:
+    if not raffle.image_filename:
+        return None
+    path = RAFFLES_UPLOADS_DIR / raffle.image_filename
+    if not path.exists():
+        return None
+    try:
+        return Image.open(path).convert("RGB")
+    except OSError:
+        return None
+
+
+def _fit_image(img: Image.Image, max_w: int, max_h: int) -> Image.Image:
+    ratio = min(max_w / img.width, max_h / img.height, 1.0)
+    if ratio >= 1.0:
+        return img
+    new_size = (max(1, int(img.width * ratio)), max(1, int(img.height * ratio)))
+    return img.resize(new_size, Image.Resampling.LANCZOS)
+
+
 def generate_ticket_image(ticket: Ticket) -> bytes:
     raffle = ticket.raffle
     price = float(raffle.ticket_price) if raffle.ticket_price else 0
@@ -82,15 +133,36 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
     font_status = _load_font(13, bold=True)
     font_prize_label = _load_font(11, bold=True)
     font_prize_name = _load_font(14)
+    font_desc = _load_font(14)
+
+    fields = [("Sorteo", raffle.name)]
+    if raffle.description and raffle.description.strip():
+        fields.append(("Descripción", raffle.description.strip()))
+    fields.extend([
+        ("Participante", ticket.buyer_name),
+        ("Precio", format_guaranies(price)),
+    ])
+
+    fields_height = _estimate_fields_height(fields, font_label, font_value, WIDTH - 72)
+
+    raffle_img = _load_raffle_image(raffle)
+    if raffle_img:
+        raffle_img = _fit_image(raffle_img, RAFFLE_IMG_MAX_W, RAFFLE_IMG_MAX_H)
+    raffle_img_section = (raffle_img.height + 20) if raffle_img else 0
 
     prizes_section_height = 0
     if prizes:
-        prizes_section_height = 12 + 18 + 4 + len(prizes) * 22 + 8
+        for prize in prizes:
+            lines = _count_wrapped_lines(prize.name, font_prize_name, WIDTH - 92)
+            prizes_section_height += max(22, lines * _font_line_height(font_prize_name))
+        prizes_section_height += 12 + 18 + 4 + 8
 
     QR_SIZE = 140
     QR_BOTTOM_PADDING = 56
     FOOTER_H = 30
-    FIXED_ABOVE_QR = 92 + 16 + 92 + 20 + 3 * 50 + 40
+    HEADER_AND_NUMBER = 92 + 16 + 92 + 20
+    BADGE_H = 40
+    FIXED_ABOVE_QR = HEADER_AND_NUMBER + raffle_img_section + fields_height + BADGE_H
     HEIGHT = max(640, FIXED_ABOVE_QR + prizes_section_height + QR_SIZE + QR_BOTTOM_PADDING + FOOTER_H)
 
     img = Image.new("RGB", (WIDTH, HEIGHT), BG)
@@ -105,15 +177,24 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
     draw.rounded_rectangle([(24, 108), (WIDTH - 24, 200)], radius=12, fill=WHITE, outline=PURPLE, width=2)
     draw.text((WIDTH // 2, 148), f"#{ticket.ticket_number}", font=font_number, fill=PURPLE, anchor="mm")
 
-    y = 220
-    fields = [
-        ("Sorteo", raffle.name),
-        ("Participante", ticket.buyer_name),
-        ("Precio", format_guaranies(price)),
-    ]
+    y = 212
+    if raffle_img:
+        img_x = (WIDTH - raffle_img.width) // 2
+        draw.rounded_rectangle(
+            [(img_x - 4, y - 4), (img_x + raffle_img.width + 4, y + raffle_img.height + 4)],
+            radius=8,
+            fill=WHITE,
+            outline=PURPLE,
+            width=1,
+        )
+        img.paste(raffle_img, (img_x, y))
+        y += raffle_img.height + 16
+
     for label, value in fields:
         draw.text((36, y), label.upper(), font=font_label, fill=MUTED)
-        y = _draw_wrapped_text(draw, value, (36, y + 16), font_value, TEXT, WIDTH - 72) + 12
+        value_font = font_desc if label == "Descripción" else font_value
+        value_color = MUTED if label == "Descripción" else TEXT
+        y = _draw_wrapped_text(draw, value, (36, y + 16), value_font, value_color, WIDTH - 72) + 12
 
     badge_y = y + 4
     badge_w = 120
@@ -142,8 +223,7 @@ def generate_ticket_image(ticket: Ticket) -> bytes:
         for i, prize in enumerate(prizes):
             bullet = f"{i + 1}."
             draw.text((36, y), bullet, font=font_prize_name, fill=PRIZE_GOLD)
-            _draw_wrapped_text(draw, prize.name, (56, y), font_prize_name, TEXT, WIDTH - 92)
-            y += 22
+            y = _draw_wrapped_text(draw, prize.name, (56, y), font_prize_name, TEXT, WIDTH - 92) + 6
         y += 8
 
     qr = qrcode.QRCode(version=None, error_correction=ERROR_CORRECT_M, box_size=4, border=2)

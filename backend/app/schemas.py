@@ -36,6 +36,7 @@ class RaffleBase(BaseModel):
     description: str | None = None
     ticket_price: Decimal = Field(default=Decimal("0.00"), ge=0)
     is_active: bool = True
+    max_tickets: int | None = Field(None, ge=1, le=10000)
 
 
 class RaffleCreate(RaffleBase):
@@ -47,6 +48,7 @@ class RaffleUpdate(BaseModel):
     description: str | None = None
     ticket_price: Decimal | None = Field(None, ge=0)
     is_active: bool | None = None
+    max_tickets: int | None = Field(None, ge=1, le=10000)
 
 
 class RaffleResponse(RaffleBase):
@@ -54,6 +56,10 @@ class RaffleResponse(RaffleBase):
 
     id: int
     created_at: datetime
+    draw_closed_at: datetime | None = None
+    image_filename: str | None = None
+    image_url: str | None = None
+    max_tickets: int | None = None
     ticket_count: int = 0
     paid_count: int = 0
     prizes: list[PrizeResponse] = []
@@ -107,6 +113,8 @@ class TicketResponse(TicketBase):
     is_paid: bool
     created_at: datetime
     raffle_name: str | None = None
+    has_payment_proof: bool = False
+    payment_proof_uploaded_at: datetime | None = None
 
 
 class PublicTicketResponse(BaseModel):
@@ -119,6 +127,52 @@ class PublicTicketResponse(BaseModel):
     ticket_price: Decimal
     is_paid: bool
     prizes: list[PrizeResponse] = []
+
+
+class PublicRaffleSummary(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    ticket_price: Decimal
+    image_url: str | None = None
+    max_tickets: int | None = None
+    tickets_sold: int = 0
+    tickets_available: int = 0
+
+
+class PublicRaffleDetail(PublicRaffleSummary):
+    prizes: list[PrizeResponse] = []
+
+
+class PublicAvailabilityResponse(BaseModel):
+    raffle_id: int
+    max_tickets: int
+    taken: list[str]
+
+
+class PublicTicketReserveCreate(TicketBase):
+    ticket_number: str = Field(..., min_length=1, max_length=20, examples=["0042"])
+
+
+class PublicTicketReserveResponse(BaseModel):
+    public_id: str
+    ticket_number: str
+    raffle_name: str
+    buyer_name: str
+    ticket_price: Decimal
+    message: str = "Tu número fue reservado. Completá el pago y enviá tu comprobante."
+
+
+class PublicPaymentStatusResponse(BaseModel):
+    public_id: str
+    ticket_number: str
+    raffle_name: str
+    buyer_name: str
+    ticket_price: Decimal
+    is_paid: bool
+    has_payment_proof: bool = False
+    payment_proof_uploaded_at: datetime | None = None
+    payment_proof_url: str | None = None
 
 
 class DrawResultResponse(BaseModel):

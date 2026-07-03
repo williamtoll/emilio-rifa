@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -6,7 +7,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.deps import get_current_user
 from app.models import DrawResult, Prize, Raffle, Ticket
-from app.schemas import DrawResultResponse
+from app.schemas import DrawResultResponse, RaffleResponse
+from app.routers.raffles import _raffle_to_response
 
 router = APIRouter(
     prefix="/api/raffles/{raffle_id}/draw-results",
@@ -37,6 +39,11 @@ def _get_raffle_or_404(raffle_id: int, db: Session) -> Raffle:
     return raffle
 
 
+def _ensure_draw_open(raffle: Raffle) -> None:
+    if raffle.draw_closed_at is not None:
+        raise HTTPException(status_code=403, detail="El sorteo está cerrado y no se puede modificar")
+
+
 @router.get("", response_model=list[DrawResultResponse])
 def list_draw_results(raffle_id: int, db: Session = Depends(get_db)):
     _get_raffle_or_404(raffle_id, db)
@@ -50,9 +57,38 @@ def list_draw_results(raffle_id: int, db: Session = Depends(get_db)):
     return [_result_to_response(r) for r in results]
 
 
+@router.post("/close", response_model=RaffleResponse)
+def close_draw(raffle_id: int, db: Session = Depends(get_db)):
+    raffle = _get_raffle_or_404(raffle_id, db)
+
+    if raffle.draw_closed_at is not None:
+        raise HTTPException(status_code=409, detail="El sorteo ya está cerrado")
+
+    prizes = db.query(Prize).filter(Prize.raffle_id == raffle_id).all()
+    if not prizes:
+        raise HTTPException(status_code=422, detail="El sorteo no tiene premios definidos")
+
+    drawn_prize_ids = {
+        r.prize_id
+        for r in db.query(DrawResult.prize_id).filter(DrawResult.raffle_id == raffle_id).all()
+    }
+    missing = [p for p in prizes if p.id not in drawn_prize_ids]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail="Todos los premios deben estar sorteados antes de cerrar el sorteo",
+        )
+
+    raffle.draw_closed_at = datetime.utcnow()
+    db.commit()
+    db.refresh(raffle)
+    return _raffle_to_response(raffle, db)
+
+
 @router.post("/{prize_id}", response_model=DrawResultResponse, status_code=201)
 def draw_winner(raffle_id: int, prize_id: int, db: Session = Depends(get_db)):
-    _get_raffle_or_404(raffle_id, db)
+    raffle = _get_raffle_or_404(raffle_id, db)
+    _ensure_draw_open(raffle)
 
     prize = db.query(Prize).filter(Prize.id == prize_id, Prize.raffle_id == raffle_id).first()
     if not prize:
@@ -104,6 +140,9 @@ def draw_winner(raffle_id: int, prize_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/{prize_id}", status_code=204)
 def undo_prize_draw(raffle_id: int, prize_id: int, db: Session = Depends(get_db)):
+    raffle = _get_raffle_or_404(raffle_id, db)
+    _ensure_draw_open(raffle)
+
     result = db.query(DrawResult).filter(
         DrawResult.raffle_id == raffle_id,
         DrawResult.prize_id == prize_id,
@@ -116,6 +155,7 @@ def undo_prize_draw(raffle_id: int, prize_id: int, db: Session = Depends(get_db)
 
 @router.delete("", status_code=204)
 def reset_all_draws(raffle_id: int, db: Session = Depends(get_db)):
-    _get_raffle_or_404(raffle_id, db)
+    raffle = _get_raffle_or_404(raffle_id, db)
+    _ensure_draw_open(raffle)
     db.query(DrawResult).filter(DrawResult.raffle_id == raffle_id).delete()
     db.commit()

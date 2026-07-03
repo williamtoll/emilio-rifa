@@ -3,6 +3,7 @@ import { useTicketImage } from '../hooks/useTicketImage'
 import { displayParaguayPhone } from '../utils/phone'
 import { shareTicketImage } from '../utils/shareTicket'
 import { buildTicketShareText } from '../utils/socialShare'
+import { copyToClipboard } from '../utils/clipboard'
 import SocialShareButtons from './SocialShareButtons'
 import TicketImageModal from './TicketImageModal'
 import PaymentProofModal from './PaymentProofModal'
@@ -124,9 +125,13 @@ export default function TicketCard({
             <button
               type="button"
               className="btn btn-sm btn-secondary"
-              onClick={() => {
-                navigator.clipboard.writeText(ticketUrl)
-                onNotice?.('Enlace copiado')
+              onClick={async () => {
+                try {
+                  await copyToClipboard(ticketUrl)
+                  onNotice?.('Enlace copiado')
+                } catch {
+                  onError?.('No se pudo copiar el enlace')
+                }
               }}
             >
               Copiar link

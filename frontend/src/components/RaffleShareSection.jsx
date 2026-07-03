@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import SocialShareButtons from './SocialShareButtons'
+import { copyToClipboard } from '../utils/clipboard'
 import { buildRaffleBuyShareText, getRaffleBuyUrl } from '../utils/socialShare'
 import './RaffleShareSection.css'
 
@@ -25,7 +26,7 @@ export default function RaffleShareSection({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(buyUrl)
+      await copyToClipboard(buyUrl)
       notify('Enlace copiado')
     } catch {
       onError?.('No se pudo copiar el enlace')

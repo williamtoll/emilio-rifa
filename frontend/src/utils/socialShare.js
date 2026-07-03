@@ -1,3 +1,5 @@
+import { copyToClipboard } from './clipboard'
+
 export function getRaffleBuyUrl(raffleId) {
   return `${window.location.origin}/comprar/${raffleId}`
 }
@@ -33,12 +35,13 @@ async function downloadImage(imageUrl, filename) {
 
 export async function shareToInstagram({ url, text, imageUrl, imageFilename }) {
   const message = text || url
+  const fullText = message.includes(url) ? message : `${message}\n${url}`
+  const textToCopy = imageUrl ? message : fullText
+
   if (imageUrl) {
     await downloadImage(imageUrl, imageFilename || 'sorteo.jpg')
-    await navigator.clipboard.writeText(message)
-    return 'image'
   }
-  const fullText = message.includes(url) ? message : `${message}\n${url}`
-  await navigator.clipboard.writeText(fullText)
-  return 'link'
+
+  await copyToClipboard(textToCopy)
+  return imageUrl ? 'image' : 'link'
 }

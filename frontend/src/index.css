@@ -11,6 +11,8 @@
   --warning: #eab308;
   --danger: #ef4444;
   --whatsapp: #25d366;
+  --facebook: #1877f2;
+  --instagram: #e4405f;
   --radius: 12px;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
@@ -126,7 +128,29 @@ label {
 
 .btn-whatsapp {
   background: var(--whatsapp);
-  color: white;
+  color: #fff;
+}
+
+.btn-whatsapp:hover {
+  filter: brightness(1.08);
+}
+
+.btn-facebook {
+  background: var(--facebook);
+  color: #fff;
+}
+
+.btn-facebook:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-instagram {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  color: #fff;
+}
+
+.btn-instagram:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
 .btn-danger {

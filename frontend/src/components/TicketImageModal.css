@@ -82,3 +82,8 @@
 .ticket-image-modal .modal-actions {
   justify-content: center;
 }
+
+.ticket-social-share {
+  justify-content: center;
+  margin-bottom: 1rem;
+}

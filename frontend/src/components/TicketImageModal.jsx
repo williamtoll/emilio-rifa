@@ -1,12 +1,18 @@
 import { useState } from 'react'
 import { useTicketImage } from '../hooks/useTicketImage'
 import { canShareImage, shareTicketImage } from '../utils/shareTicket'
+import { buildTicketShareText } from '../utils/socialShare'
+import SocialShareButtons from './SocialShareButtons'
 import './TicketImageModal.css'
 
 export default function TicketImageModal({ ticket, onClose, onNotice, onError }) {
   const isPaid = ticket.is_paid
   const { imageUrl, loading, error } = useTicketImage(ticket.id, isPaid)
   const [sharing, setSharing] = useState(false)
+  const ticketUrl = ticket.short_url || ticket.public_url
+  const shareText = ticketUrl
+    ? buildTicketShareText(ticket.ticket_number, ticket.raffle_name, ticketUrl)
+    : null
 
   const handleDownload = () => {
     if (!isPaid || !imageUrl) return
@@ -58,24 +64,35 @@ export default function TicketImageModal({ ticket, onClose, onNotice, onError })
             {(ticket.short_url || ticket.public_url) && (
               <div className="ticket-public-link">
                 <a
-                  href={ticket.short_url || ticket.public_url}
+                  href={ticketUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ticket-share-link"
                 >
-                  {ticket.short_url || ticket.public_url}
+                  {ticketUrl}
                 </a>
                 <button
                   type="button"
                   className="btn btn-sm btn-secondary"
                   onClick={() => {
-                    navigator.clipboard.writeText(ticket.short_url || ticket.public_url)
+                    navigator.clipboard.writeText(ticketUrl)
                     onNotice?.('Enlace copiado')
                   }}
                 >
                   Copiar
                 </button>
               </div>
+            )}
+            {ticketUrl && shareText && (
+              <SocialShareButtons
+                url={ticketUrl}
+                text={shareText}
+                imageUrl={imageUrl}
+                imageFilename={`ticket-${ticket.ticket_number}.png`}
+                onNotice={onNotice}
+                onError={onError}
+                className="ticket-social-share"
+              />
             )}
             <div className="ticket-image-preview">
               {loading && <p className="ticket-image-status">Cargando imagen...</p>}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import TicketCard from './TicketCard'
 import PrizesManager from './PrizesManager'
+import RaffleShareSection from './RaffleShareSection'
 import { formatGuaranies } from '../utils/currency'
 import {
   formatParaguayPhoneInput,
@@ -79,16 +80,8 @@ export default function TicketPanel({
 
   const unpaid = tickets.filter((t) => !t.is_paid).length
   const paid = tickets.filter((t) => t.is_paid).length
-  const buyUrl = `${window.location.origin}/comprar/${raffle.id}`
-
-  const copyBuyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(buyUrl)
-      onNotice?.('Enlace de compra copiado')
-    } catch {
-      onError('No se pudo copiar el enlace')
-    }
-  }
+  const maxTickets = raffle.max_tickets || tickets.length + 20
+  const ticketsAvailable = Math.max(0, maxTickets - tickets.length)
 
   return (
     <main className="ticket-panel">
@@ -107,15 +100,15 @@ export default function TicketPanel({
             <span className="unpaid-count">{unpaid} pendientes</span>
           </div>
           {raffle.is_active && !raffle.draw_closed_at && (
-            <div className="panel-buy-link">
-              <span className="panel-buy-label">Compra pública:</span>
-              <a href={buyUrl} target="_blank" rel="noreferrer" className="panel-buy-url">
-                {buyUrl}
-              </a>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={copyBuyLink}>
-                Copiar
-              </button>
-            </div>
+            <RaffleShareSection
+              raffleId={raffle.id}
+              raffleName={raffle.name}
+              priceLabel={`${formatGuaranies(raffle.ticket_price)} por ticket`}
+              availableLabel={`${ticketsAvailable} números disponibles`}
+              imageUrl={raffle.image_url}
+              onNotice={onNotice}
+              onError={onError}
+            />
           )}
           {onPrizesChange && (
             <PrizesManager

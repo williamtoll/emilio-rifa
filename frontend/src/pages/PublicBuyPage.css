@@ -76,23 +76,40 @@
   gap: 0.75rem;
 }
 
+.buy-raffle-card-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.buy-raffle-card-wrap:hover {
+  border-color: var(--primary);
+}
+
+.buy-share-notice {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--success);
+  margin-top: 0.75rem;
+}
+
 .buy-raffle-card {
   display: flex;
   gap: 1rem;
   align-items: center;
   text-align: left;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: transparent;
+  border: none;
+  border-radius: 0;
   padding: 1rem;
   cursor: pointer;
   color: var(--text);
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s;
   width: 100%;
 }
 
 .buy-raffle-card:hover {
-  border-color: var(--primary);
   background: var(--surface-hover);
 }
 

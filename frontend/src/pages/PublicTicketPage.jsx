@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { publicApi } from '../api'
+import SocialShareButtons from '../components/SocialShareButtons'
 import { formatGuaranies } from '../utils/currency'
+import { buildTicketShareText } from '../utils/socialShare'
 import './PublicTicketPage.css'
 
 export default function PublicTicketPage({ publicId }) {
@@ -8,6 +10,16 @@ export default function PublicTicketPage({ publicId }) {
   const [imageUrl, setImageUrl] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
+
+  const pageUrl = useMemo(
+    () => `${window.location.origin}/t/${publicId}`,
+    [publicId],
+  )
+  const shareText = useMemo(
+    () => (ticket ? buildTicketShareText(ticket.ticket_number, ticket.raffle_name, pageUrl) : null),
+    [ticket, pageUrl],
+  )
 
   useEffect(() => {
     let objectUrl = null
@@ -86,6 +98,20 @@ export default function PublicTicketPage({ publicId }) {
             <strong>Precio:</strong> {formatGuaranies(ticket.ticket_price)}
           </p>
           <span className="badge badge-paid">Pagado</span>
+        </div>
+
+        <div className="public-share">
+          <p className="public-share-label">Compartir ticket</p>
+          {notice && <p className="public-share-notice">{notice}</p>}
+          <SocialShareButtons
+            url={pageUrl}
+            text={shareText}
+            imageUrl={imageUrl}
+            imageFilename={ticket ? `ticket-${ticket.ticket_number}.png` : 'ticket.png'}
+            onNotice={setNotice}
+            onError={setNotice}
+            size="md"
+          />
         </div>
 
         {ticket.prizes && ticket.prizes.length > 0 && (

@@ -141,3 +141,27 @@
   color: var(--text-muted);
   margin: 0;
 }
+
+.public-share {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.public-share-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.public-share-notice {
+  font-size: 0.8125rem;
+  color: var(--success);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.public-share .social-share-buttons {
+  justify-content: center;
+}

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useTicketImage } from '../hooks/useTicketImage'
 import { displayParaguayPhone } from '../utils/phone'
 import { shareTicketImage } from '../utils/shareTicket'
+import { buildTicketShareText } from '../utils/socialShare'
+import SocialShareButtons from './SocialShareButtons'
 import TicketImageModal from './TicketImageModal'
 import PaymentProofModal from './PaymentProofModal'
 import './TicketCard.css'
@@ -23,6 +25,10 @@ export default function TicketCard({
   const isEmailLoading = loading === `email-${ticket.id}`
   const isWaLoading = loading === `wa-${ticket.id}`
   const isPaidLoading = loading === `paid-${ticket.id}`
+  const ticketUrl = ticket.short_url || ticket.public_url
+  const shareText = ticketUrl
+    ? buildTicketShareText(ticket.ticket_number, ticket.raffle_name, ticketUrl)
+    : null
 
   const handleShare = async () => {
     if (!isPaid) {
@@ -114,17 +120,27 @@ export default function TicketCard({
               {isWaLoading ? '...' : 'WhatsApp'}
             </button>
           )}
-          {isPaid && (ticket.short_url || ticket.public_url) && (
+          {isPaid && ticketUrl && (
             <button
               type="button"
               className="btn btn-sm btn-secondary"
               onClick={() => {
-                navigator.clipboard.writeText(ticket.short_url || ticket.public_url)
+                navigator.clipboard.writeText(ticketUrl)
                 onNotice?.('Enlace copiado')
               }}
             >
               Copiar link
             </button>
+          )}
+          {isPaid && ticketUrl && shareText && (
+            <SocialShareButtons
+              url={ticketUrl}
+              text={shareText}
+              imageUrl={imageUrl}
+              imageFilename={`ticket-${ticket.ticket_number}.png`}
+              onNotice={onNotice}
+              onError={onError}
+            />
           )}
           {ticket.buyer_email && (
             <button className="btn btn-sm btn-secondary" onClick={onSendEmail} disabled={isEmailLoading}>

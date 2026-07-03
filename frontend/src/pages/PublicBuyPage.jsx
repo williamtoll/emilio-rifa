@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { publicApi } from '../api'
+import RaffleShareSection from '../components/RaffleShareSection'
 import { formatGuaranies } from '../utils/currency'
 import {
   formatParaguayPhoneInput,
@@ -29,6 +30,7 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
+  const [shareNotice, setShareNotice] = useState(null)
 
   const loadRaffleList = useCallback(async () => {
     setLoading(true)
@@ -181,19 +183,34 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
 
         <div className="buy-raffle-list">
           {raffles.map((r) => (
-            <button key={r.id} type="button" className="buy-raffle-card" onClick={() => setSelectedId(r.id)}>
-              {r.image_url && <img src={r.image_url} alt="" className="buy-raffle-card-img" />}
-              <div className="buy-raffle-card-body">
-                <h2>{r.name}</h2>
-                {r.description && <p>{r.description}</p>}
-                <div className="buy-raffle-card-meta">
-                  <span>{formatGuaranies(r.ticket_price)}</span>
-                  <span>{r.tickets_available} disponibles</span>
+            <article key={r.id} className="buy-raffle-card-wrap">
+              <button type="button" className="buy-raffle-card" onClick={() => setSelectedId(r.id)}>
+                {r.image_url && <img src={r.image_url} alt="" className="buy-raffle-card-img" />}
+                <div className="buy-raffle-card-body">
+                  <h2>{r.name}</h2>
+                  {r.description && <p>{r.description}</p>}
+                  <div className="buy-raffle-card-meta">
+                    <span>{formatGuaranies(r.ticket_price)}</span>
+                    <span>{r.tickets_available} disponibles</span>
+                  </div>
                 </div>
+              </button>
+              <div className="buy-raffle-card-share" onClick={(e) => e.stopPropagation()}>
+                <RaffleShareSection
+                  raffleId={r.id}
+                  raffleName={r.name}
+                  priceLabel={`${formatGuaranies(r.ticket_price)} por ticket`}
+                  availableLabel={`${r.tickets_available} números disponibles`}
+                  imageUrl={r.image_url}
+                  onNotice={setShareNotice}
+                  onError={setError}
+                  compact
+                />
               </div>
-            </button>
+            </article>
           ))}
         </div>
+        {shareNotice && <p className="buy-share-notice">{shareNotice}</p>}
       </div>
     )
   }
@@ -223,6 +240,17 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
           )}
 
           {raffle.description && <p className="buy-desc">{raffle.description}</p>}
+
+          <RaffleShareSection
+            raffleId={raffle.id}
+            raffleName={raffle.name}
+            priceLabel={`${formatGuaranies(raffle.ticket_price)} por ticket`}
+            availableLabel={`${maxTickets - taken.size} números disponibles`}
+            imageUrl={raffle.image_url}
+            onNotice={setShareNotice}
+            onError={setError}
+          />
+          {shareNotice && <p className="buy-share-notice">{shareNotice}</p>}
 
           {raffle.prizes?.length > 0 && (
             <div className="buy-prizes">

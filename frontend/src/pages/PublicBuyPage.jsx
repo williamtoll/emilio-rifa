@@ -19,7 +19,7 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
   const [taken, setTaken] = useState(new Set())
   const [maxTickets, setMaxTickets] = useState(100)
   const [selectedId, setSelectedId] = useState(initialRaffleId ? Number(initialRaffleId) : null)
-  const [selectedNumber, setSelectedNumber] = useState(null)
+  const [selectedNumbers, setSelectedNumbers] = useState(new Set())
   const [search, setSearch] = useState('')
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
   const [buyerName, setBuyerName] = useState('')
@@ -31,6 +31,11 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
   const [error, setError] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
   const [shareNotice, setShareNotice] = useState(null)
+
+  const selectedList = useMemo(
+    () => [...selectedNumbers].sort((a, b) => Number(a) - Number(b)),
+    [selectedNumbers],
+  )
 
   const loadRaffleList = useCallback(async () => {
     setLoading(true)
@@ -52,7 +57,7 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
     setLoading(true)
     setError(null)
     setConfirmation(null)
-    setSelectedNumber(null)
+    setSelectedNumbers(new Set())
     try {
       const [detail, availability] = await Promise.all([
         publicApi.getRaffle(id),
@@ -94,10 +99,25 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
     return list
   }, [maxTickets, taken, showAvailableOnly, search])
 
+  const toggleNumber = (num) => {
+    setSelectedNumbers((prev) => {
+      const next = new Set(prev)
+      if (next.has(num)) {
+        next.delete(num)
+      } else {
+        next.add(num)
+      }
+      return next
+    })
+    setError(null)
+  }
+
+  const clearSelection = () => setSelectedNumbers(new Set())
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedNumber) {
-      setError('Elegí un número de ticket')
+    if (selectedList.length === 0) {
+      setError('Elegí al menos un número de ticket')
       return
     }
     if (buyerPhone && !isValidParaguayPhone(buyerPhone)) {
@@ -108,16 +128,16 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
     setError(null)
     try {
       const result = await publicApi.reserveTicket(selectedId, {
-        ticket_number: selectedNumber,
+        ticket_numbers: selectedList,
         buyer_name: buyerName,
         buyer_phone: normalizeParaguayPhone(buyerPhone),
         buyer_email: buyerEmail || null,
       })
       setConfirmation(result)
-      setTaken((prev) => new Set([...prev, selectedNumber]))
-      setSelectedNumber(null)
-    } catch (e) {
-      setError(e.message)
+      setTaken((prev) => new Set([...prev, ...selectedList]))
+      setSelectedNumbers(new Set())
+    } catch (err) {
+      setError(err.message)
       await loadRaffleDetail(selectedId)
     } finally {
       setSubmitting(false)
@@ -125,27 +145,38 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
   }
 
   if (confirmation) {
+    const count = confirmation.tickets.length
+    const paymentPublicId = confirmation.tickets[0]?.public_id
+
     return (
       <div className="buy-page">
         <div className="buy-card buy-success">
           <div className="buy-success-icon">✅</div>
-          <h1>¡Número reservado!</h1>
+          <h1>{count > 1 ? '¡Números reservados!' : '¡Número reservado!'}</h1>
           <p className="buy-success-raffle">{confirmation.raffle_name}</p>
-          <div className="buy-success-number">#{confirmation.ticket_number}</div>
+          <div className="buy-success-numbers">
+            {confirmation.tickets.map((t) => (
+              <span key={t.public_id} className="buy-success-number">#{t.ticket_number}</span>
+            ))}
+          </div>
           <p className="buy-success-name">{confirmation.buyer_name}</p>
-          <p className="buy-success-price">{formatGuaranies(confirmation.ticket_price)}</p>
+          <p className="buy-success-price">
+            {count > 1
+              ? `${count} tickets · Total ${formatGuaranies(confirmation.total_price)}`
+              : formatGuaranies(confirmation.total_price)}
+          </p>
           <p className="buy-success-msg">{confirmation.message}</p>
           <div className="buy-success-actions">
-            {confirmation.public_id && (
+            {paymentPublicId && (
               <a
-                href={`/comprobante/${confirmation.public_id}`}
+                href={`/comprobante/${paymentPublicId}`}
                 className="btn btn-primary"
               >
                 Enviar comprobante de pago
               </a>
             )}
             <button type="button" className="btn btn-secondary" onClick={() => setConfirmation(null)}>
-              Elegir otro número
+              Elegir más números
             </button>
             {raffles.length > 1 && (
               <button type="button" className="btn btn-secondary" onClick={() => { setSelectedId(null); setConfirmation(null) }}>
@@ -214,6 +245,9 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
       </div>
     )
   }
+
+  const unitPrice = raffle?.ticket_price ? Number(raffle.ticket_price) : 0
+  const selectionTotal = unitPrice * selectedList.length
 
   return (
     <div className="buy-page">
@@ -287,6 +321,9 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
 
             <p className="buy-picker-hint">
               {taken.size} vendidos · {maxTickets - taken.size} disponibles de {maxTickets}
+              {selectedList.length > 0 && (
+                <> · <strong>{selectedList.length} seleccionados</strong></>
+              )}
             </p>
 
             <div className="buy-number-grid">
@@ -295,8 +332,8 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
                   key={num}
                   type="button"
                   disabled={isTaken}
-                  className={`buy-number ${isTaken ? 'buy-number--taken' : ''} ${selectedNumber === num ? 'buy-number--selected' : ''}`}
-                  onClick={() => setSelectedNumber(num)}
+                  className={`buy-number ${isTaken ? 'buy-number--taken' : ''} ${selectedNumbers.has(num) ? 'buy-number--selected' : ''}`}
+                  onClick={() => !isTaken && toggleNumber(num)}
                 >
                   {num}
                 </button>
@@ -310,12 +347,37 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
 
           <form className="buy-form" onSubmit={handleSubmit}>
             <h3>Tus datos</h3>
-            {selectedNumber ? (
-              <p className="buy-selected-label">
-                Número elegido: <strong>#{selectedNumber}</strong>
-              </p>
+            {selectedList.length > 0 ? (
+              <div className="buy-selected-wrap">
+                <p className="buy-selected-label">
+                  {selectedList.length === 1 ? 'Número elegido:' : 'Números elegidos:'}
+                </p>
+                <div className="buy-selected-chips">
+                  {selectedList.map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      className="buy-selected-chip"
+                      onClick={() => toggleNumber(num)}
+                      title="Quitar"
+                    >
+                      #{num} ×
+                    </button>
+                  ))}
+                </div>
+                {selectedList.length > 1 && (
+                  <p className="buy-selected-total">
+                    Total: <strong>{formatGuaranies(selectionTotal)}</strong>
+                  </p>
+                )}
+                <button type="button" className="buy-clear-selection" onClick={clearSelection}>
+                  Limpiar selección
+                </button>
+              </div>
             ) : (
-              <p className="buy-selected-label buy-selected-label--empty">Seleccioná un número arriba</p>
+              <p className="buy-selected-label buy-selected-label--empty">
+                Seleccioná uno o más números arriba
+              </p>
             )}
 
             <div className="form-group">
@@ -352,9 +414,15 @@ export default function PublicBuyPage({ raffleId: initialRaffleId }) {
             <button
               type="submit"
               className="btn btn-primary buy-submit"
-              disabled={submitting || !selectedNumber}
+              disabled={submitting || selectedList.length === 0}
             >
-              {submitting ? 'Reservando...' : `Reservar ticket ${selectedNumber ? `#${selectedNumber}` : ''}`}
+              {submitting
+                ? 'Reservando...'
+                : selectedList.length > 1
+                  ? `Reservar ${selectedList.length} tickets`
+                  : selectedList.length === 1
+                    ? `Reservar ticket #${selectedList[0]}`
+                    : 'Reservar tickets'}
             </button>
           </form>
         </div>

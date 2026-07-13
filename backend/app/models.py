@@ -69,6 +69,7 @@ class Ticket(Base):
     is_paid: Mapped[bool] = mapped_column(Boolean, default=False)
     payment_proof_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     payment_proof_uploaded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reservation_group_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     raffle: Mapped["Raffle"] = relationship("Raffle", back_populates="tickets")

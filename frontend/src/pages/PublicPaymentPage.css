@@ -62,6 +62,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+.payment-ticket-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payment-ticket-numbers .payment-ticket-number {
+  font-size: 1.375rem;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 0.25rem 0.625rem;
+}
+
 .payment-ticket-name {
   font-size: 1.0625rem;
   font-weight: 600;

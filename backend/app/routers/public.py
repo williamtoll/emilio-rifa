@@ -17,13 +17,13 @@ from app.schemas import (
     PublicPaymentStatusResponse,
     PublicRaffleDetail,
     PublicRaffleSummary,
+    PublicReservedTicketItem,
     PublicTicketReserveCreate,
     PublicTicketReserveResponse,
     PublicTicketResponse,
 )
 from app.services.ticket_generator import (
     get_effective_max_tickets,
-    is_ticket_number_available,
     normalize_ticket_number,
 )
 from app.services.ticket_image_service import generate_ticket_image
@@ -34,6 +34,7 @@ router = APIRouter(prefix="/api/public", tags=["public"])
 PAYMENT_PROOFS_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "payment-proofs"
 ALLOWED_PROOF_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"}
 MAX_PROOF_BYTES = 5 * 1024 * 1024
+MAX_TICKETS_PER_RESERVATION = 20
 
 
 def _prize_image_url(prize: Prize) -> str | None:
@@ -72,6 +73,59 @@ def _delete_payment_proof_file(ticket: Ticket) -> None:
     path = PAYMENT_PROOFS_DIR / ticket.payment_proof_filename
     if path.exists():
         path.unlink()
+
+
+def _get_reservation_group(ticket: Ticket, db: Session) -> list[Ticket]:
+    if not ticket.reservation_group_id:
+        return [ticket]
+    return (
+        db.query(Ticket)
+        .filter(Ticket.reservation_group_id == ticket.reservation_group_id)
+        .order_by(Ticket.ticket_number)
+        .all()
+    )
+
+
+def _build_payment_status(ticket: Ticket, db: Session) -> PublicPaymentStatusResponse:
+    group = _get_reservation_group(ticket, db)
+    raffle = ticket.raffle
+    unit_price = Decimal(str(raffle.ticket_price))
+    ticket_numbers = [t.ticket_number for t in group]
+    proof_ticket = next((t for t in group if t.payment_proof_filename), ticket)
+    all_paid = all(t.is_paid for t in group)
+    has_proof = any(t.payment_proof_filename for t in group)
+    proof_uploaded_at = proof_ticket.payment_proof_uploaded_at if has_proof else None
+
+    return PublicPaymentStatusResponse(
+        public_id=ticket.public_id,
+        ticket_number=ticket.ticket_number,
+        ticket_numbers=ticket_numbers,
+        raffle_name=raffle.name,
+        buyer_name=ticket.buyer_name,
+        ticket_price=unit_price,
+        total_price=unit_price * len(group),
+        is_paid=all_paid,
+        has_payment_proof=has_proof,
+        payment_proof_uploaded_at=proof_uploaded_at,
+        payment_proof_url=_payment_proof_url(proof_ticket) if has_proof else None,
+        reservation_group_id=ticket.reservation_group_id,
+    )
+
+
+def _apply_payment_proof_to_group(group: list[Ticket], filename: str, uploaded_at: datetime) -> None:
+    for member in group:
+        if member.is_paid:
+            continue
+        member.payment_proof_filename = filename
+        member.payment_proof_uploaded_at = uploaded_at
+
+
+def _delete_group_payment_proofs(group: list[Ticket]) -> None:
+    seen: set[str] = set()
+    for member in group:
+        if member.payment_proof_filename and member.payment_proof_filename not in seen:
+            seen.add(member.payment_proof_filename)
+            _delete_payment_proof_file(member)
 
 
 def _is_raffle_open(raffle: Raffle) -> bool:
@@ -185,61 +239,86 @@ def reserve_public_ticket(
 ):
     raffle = _get_open_raffle(raffle_id, db)
 
-    try:
-        ticket_number = normalize_ticket_number(data.ticket_number)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    if len(data.ticket_numbers) > MAX_TICKETS_PER_RESERVATION:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Máximo {MAX_TICKETS_PER_RESERVATION} tickets por reserva",
+        )
 
     taken = _taken_numbers(raffle.id, db)
     max_t = get_effective_max_tickets(raffle, taken)
-    if int(ticket_number) > max_t:
-        raise HTTPException(status_code=400, detail=f"El número máximo disponible es {max_t:04d}")
+    normalized: list[str] = []
 
-    if not is_ticket_number_available(db, raffle.id, ticket_number):
-        raise HTTPException(status_code=409, detail="Ese número ya no está disponible")
+    for raw_number in data.ticket_numbers:
+        try:
+            ticket_number = normalize_ticket_number(raw_number)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
-    ticket = Ticket(
-        raffle_id=raffle.id,
-        ticket_number=ticket_number,
-        short_code=generate_unique_short_code(db),
-        buyer_name=data.buyer_name,
-        buyer_phone=data.buyer_phone,
-        buyer_email=str(data.buyer_email) if data.buyer_email else None,
-        is_paid=False,
-    )
-    db.add(ticket)
+        if int(ticket_number) > max_t:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El número {ticket_number} supera el máximo disponible ({max_t:04d})",
+            )
+        if ticket_number in taken:
+            raise HTTPException(status_code=409, detail=f"El número {ticket_number} ya no está disponible")
+        if ticket_number in normalized:
+            raise HTTPException(status_code=400, detail=f"El número {ticket_number} está repetido en tu selección")
+
+        normalized.append(ticket_number)
+
+    group_id = str(uuid.uuid4()) if len(normalized) > 1 else None
+    created: list[Ticket] = []
+
+    for ticket_number in normalized:
+        ticket = Ticket(
+            raffle_id=raffle.id,
+            ticket_number=ticket_number,
+            short_code=generate_unique_short_code(db),
+            buyer_name=data.buyer_name,
+            buyer_phone=data.buyer_phone,
+            buyer_email=str(data.buyer_email) if data.buyer_email else None,
+            is_paid=False,
+            reservation_group_id=group_id,
+        )
+        db.add(ticket)
+        created.append(ticket)
+
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Ese número ya no está disponible")
+        raise HTTPException(status_code=409, detail="Uno o más números ya no están disponibles")
 
-    db.refresh(ticket)
+    for ticket in created:
+        db.refresh(ticket)
+
+    unit_price = Decimal(str(raffle.ticket_price))
+    count = len(created)
+    message = (
+        "Tus números fueron reservados. Completá el pago y enviá tu comprobante."
+        if count > 1
+        else "Tu número fue reservado. Completá el pago y enviá tu comprobante."
+    )
 
     return PublicTicketReserveResponse(
-        public_id=ticket.public_id,
-        ticket_number=ticket_number,
+        reservation_group_id=group_id,
+        tickets=[
+            PublicReservedTicketItem(public_id=t.public_id, ticket_number=t.ticket_number)
+            for t in created
+        ],
         raffle_name=raffle.name,
         buyer_name=data.buyer_name,
-        ticket_price=Decimal(str(raffle.ticket_price)),
+        ticket_price=unit_price,
+        total_price=unit_price * count,
+        message=message,
     )
 
 
 @router.get("/tickets/{public_id}/payment", response_model=PublicPaymentStatusResponse)
 def get_payment_status(public_id: str, db: Session = Depends(get_db)):
     ticket = _get_ticket_by_public_id(public_id, db)
-    raffle = ticket.raffle
-    return PublicPaymentStatusResponse(
-        public_id=ticket.public_id,
-        ticket_number=ticket.ticket_number,
-        raffle_name=raffle.name,
-        buyer_name=ticket.buyer_name,
-        ticket_price=Decimal(str(raffle.ticket_price)),
-        is_paid=ticket.is_paid,
-        has_payment_proof=bool(ticket.payment_proof_filename),
-        payment_proof_uploaded_at=ticket.payment_proof_uploaded_at,
-        payment_proof_url=_payment_proof_url(ticket),
-    )
+    return _build_payment_status(ticket, db)
 
 
 @router.post("/tickets/{public_id}/payment-proof", response_model=PublicPaymentStatusResponse)
@@ -249,9 +328,10 @@ async def upload_payment_proof(
     db: Session = Depends(get_db),
 ):
     ticket = _get_ticket_by_public_id(public_id, db)
+    group = _get_reservation_group(ticket, db)
 
-    if ticket.is_paid:
-        raise HTTPException(status_code=400, detail="Este ticket ya está confirmado como pagado")
+    if all(t.is_paid for t in group):
+        raise HTTPException(status_code=400, detail="Estos tickets ya están confirmados como pagados")
 
     if file.content_type not in ALLOWED_PROOF_TYPES:
         raise HTTPException(
@@ -264,7 +344,7 @@ async def upload_payment_proof(
         raise HTTPException(status_code=400, detail="El archivo no puede superar 5 MB.")
 
     PAYMENT_PROOFS_DIR.mkdir(parents=True, exist_ok=True)
-    _delete_payment_proof_file(ticket)
+    _delete_group_payment_proofs(group)
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in (file.filename or "") else "jpg"
     if file.content_type == "application/pdf":
@@ -272,23 +352,12 @@ async def upload_payment_proof(
     filename = f"{uuid.uuid4()}.{ext}"
     (PAYMENT_PROOFS_DIR / filename).write_bytes(content)
 
-    ticket.payment_proof_filename = filename
-    ticket.payment_proof_uploaded_at = datetime.utcnow()
+    uploaded_at = datetime.utcnow()
+    _apply_payment_proof_to_group(group, filename, uploaded_at)
     db.commit()
     db.refresh(ticket)
 
-    raffle = ticket.raffle
-    return PublicPaymentStatusResponse(
-        public_id=ticket.public_id,
-        ticket_number=ticket.ticket_number,
-        raffle_name=raffle.name,
-        buyer_name=ticket.buyer_name,
-        ticket_price=Decimal(str(raffle.ticket_price)),
-        is_paid=ticket.is_paid,
-        has_payment_proof=True,
-        payment_proof_uploaded_at=ticket.payment_proof_uploaded_at,
-        payment_proof_url=_payment_proof_url(ticket),
-    )
+    return _build_payment_status(ticket, db)
 
 
 @router.get("/tickets/{public_id}", response_model=PublicTicketResponse)

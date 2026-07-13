@@ -151,28 +151,42 @@ class PublicAvailabilityResponse(BaseModel):
 
 
 class PublicTicketReserveCreate(TicketBase):
-    ticket_number: str = Field(..., min_length=1, max_length=20, examples=["0042"])
+    ticket_numbers: list[str] = Field(
+        ...,
+        min_length=1,
+        max_length=20,
+        examples=[["0042", "0043"]],
+    )
+
+
+class PublicReservedTicketItem(BaseModel):
+    public_id: str
+    ticket_number: str
 
 
 class PublicTicketReserveResponse(BaseModel):
-    public_id: str
-    ticket_number: str
+    reservation_group_id: str | None = None
+    tickets: list[PublicReservedTicketItem]
     raffle_name: str
     buyer_name: str
     ticket_price: Decimal
-    message: str = "Tu número fue reservado. Completá el pago y enviá tu comprobante."
+    total_price: Decimal
+    message: str = "Tus números fueron reservados. Completá el pago y enviá tu comprobante."
 
 
 class PublicPaymentStatusResponse(BaseModel):
     public_id: str
     ticket_number: str
+    ticket_numbers: list[str] = []
     raffle_name: str
     buyer_name: str
     ticket_price: Decimal
+    total_price: Decimal
     is_paid: bool
     has_payment_proof: bool = False
     payment_proof_uploaded_at: datetime | None = None
     payment_proof_url: str | None = None
+    reservation_group_id: str | None = None
 
 
 class DrawResultResponse(BaseModel):

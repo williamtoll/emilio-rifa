@@ -99,6 +99,11 @@ export default function PublicPaymentPage({ publicId }) {
   }
 
   const proofIsPdf = status.payment_proof_url?.toLowerCase().endsWith('.pdf')
+  const ticketNumbers = status.ticket_numbers?.length > 0
+    ? status.ticket_numbers
+    : [status.ticket_number]
+  const isMulti = ticketNumbers.length > 1
+  const totalPrice = status.total_price ?? status.ticket_price
 
   return (
     <div className="payment-page">
@@ -112,16 +117,32 @@ export default function PublicPaymentPage({ publicId }) {
 
       <div className="payment-card">
         <div className="payment-ticket-info">
-          <span className="payment-ticket-number">#{status.ticket_number}</span>
+          {isMulti ? (
+            <div className="payment-ticket-numbers">
+              {ticketNumbers.map((num) => (
+                <span key={num} className="payment-ticket-number">#{num}</span>
+              ))}
+            </div>
+          ) : (
+            <span className="payment-ticket-number">#{status.ticket_number}</span>
+          )}
           <span className="payment-ticket-name">{status.buyer_name}</span>
-          <span className="payment-ticket-price">{formatGuaranies(status.ticket_price)}</span>
+          <span className="payment-ticket-price">
+            {isMulti
+              ? `${ticketNumbers.length} tickets · Total ${formatGuaranies(totalPrice)}`
+              : formatGuaranies(totalPrice)}
+          </span>
         </div>
 
         {status.is_paid ? (
           <div className="payment-done">
             <div className="payment-done-icon">✅</div>
             <h2>Pago confirmado</h2>
-            <p>Tu ticket ya fue marcado como pagado. Recibirás tu ticket digital cuando el organizador lo envíe.</p>
+            <p>
+              {isMulti
+                ? 'Tus tickets ya fueron marcados como pagados. Recibirás tus tickets digitales cuando el organizador los envíe.'
+                : 'Tu ticket ya fue marcado como pagado. Recibirás tu ticket digital cuando el organizador lo envíe.'}
+            </p>
           </div>
         ) : status.has_payment_proof ? (
           <div className="payment-sent">
@@ -155,7 +176,8 @@ export default function PublicPaymentPage({ publicId }) {
         ) : (
           <div className="payment-instructions">
             <p>
-              Realizá la transferencia por <strong>{formatGuaranies(status.ticket_price)}</strong> y
+              Realizá la transferencia por <strong>{formatGuaranies(totalPrice)}</strong>
+              {isMulti && <> ({ticketNumbers.length} tickets)</>} y
               subí una foto o captura del comprobante para confirmar tu reserva.
             </p>
           </div>

@@ -365,6 +365,68 @@
   margin-bottom: 0.5rem;
 }
 
+.buy-success-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.buy-success-numbers .buy-success-number {
+  font-size: 1.5rem;
+  margin-bottom: 0;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 0.375rem 0.75rem;
+}
+
+.buy-selected-wrap {
+  margin-bottom: 1rem;
+}
+
+.buy-selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0.5rem 0;
+}
+
+.buy-selected-chip {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.buy-selected-chip:hover {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+.buy-selected-total {
+  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+}
+
+.buy-clear-selection {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.buy-clear-selection:hover {
+  color: var(--text);
+}
+
 .buy-success-name {
   font-size: 1.0625rem;
   font-weight: 600;

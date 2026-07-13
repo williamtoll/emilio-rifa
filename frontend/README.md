@@ -18,25 +18,20 @@ Las rutas públicas no requieren autenticación. El panel admin usa JWT guardado
 
 ## Funcionalidades públicas (clientes)
 
-### Elegir y reservar un ticket (`/comprar`)
+### Elegir y reservar tickets (`/comprar`)
 
 - Listado de sorteos activos con imagen, precio y cantidad de números disponibles.
-- Al entrar a un sorteo, el cliente ve:
-  - Imagen, descripción y premios del sorteo.
-  - Grilla de números (0001–9999 según configuración del sorteo).
-  - Búsqueda por número y filtro “solo disponibles”.
-  - Números ya tomados deshabilitados en tiempo real.
+- Al entrar a un sorteo, el cliente puede **seleccionar uno o más números** (hasta 20 por reserva).
+- Grilla de números con selección múltiple: clic para marcar/desmarcar, chips con los elegidos y total a pagar.
+- Búsqueda por número y filtro “solo disponibles”.
 - Formulario con nombre, teléfono móvil (Paraguay) y correo opcional.
-- Tras reservar, muestra confirmación con el número elegido y enlace para enviar el comprobante.
+- Tras reservar, muestra todos los números confirmados, el total y enlace para enviar un único comprobante.
 
 ### Subir comprobante de pago (`/comprobante/{public_id}`)
 
 - Pantalla accesible después de reservar o con el enlace único del ticket.
-- Muestra datos de la reserva: sorteo, número, nombre y monto.
-- Permite subir una imagen (JPG, PNG, WEBP, GIF) o PDF (máx. 5 MB).
-- Vista previa del archivo antes de enviar.
-- Si ya se envió un comprobante, se puede ver y reemplazar hasta que el organizador confirme el pago.
-- Cuando el ticket ya está marcado como pagado, la pantalla indica que el pago fue confirmado.
+- Si se reservaron varios tickets juntos, muestra **todos los números** y el **monto total**.
+- Un solo comprobante aplica a toda la reserva grupal.
 
 ### Ver ticket pagado (`/t/{public_id}`)
 
